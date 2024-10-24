@@ -1,16 +1,32 @@
 import express from "express";
-import dotenv from 'dotenv'
-import StudentRoutes from './routes/students.js'
+import dotenv from "dotenv";
+import StudentRoutes from "./routes/students.js";
+import TeacherRoutes from "./routes/teachers.js";
+import cors from "cors";
 
-dotenv.config()
+dotenv.config();
 const app = express();
 
-app.use('/api/students', StudentRoutes);
+// USE MIDDLEWARE
+app.use(express.json());
 
-const port = process.env.PORT || 3030
+// CORS
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Credentials", true);
+
+  next();
+});
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+  })
+);
+
+app.use("/api/students", StudentRoutes);
+app.use("/api/teachers", TeacherRoutes);
+
+const port = process.env.PORT || 3030;
 
 app.listen(port, () => {
-    console.log('Server is running on port: ', port)
-})
-
-
+  console.log("Server is running on port: ", port);
+});

@@ -74,6 +74,7 @@ async function main() {
         birth: new Date(new Date().setFullYear(new Date().getFullYear() - 30)),
         sex: i % 2 === 0 ? Sex.Male : Sex.Female,
         classId: (i % 6) + 1,
+        subjects: { connect: [{ id: (i % 10) + 1 }] },
         rank: Rank.A,
       },
     });
