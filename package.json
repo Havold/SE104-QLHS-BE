@@ -1,6 +1,9 @@
 {
   "name": "api",
   "version": "1.0.0",
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
   "description": "Server for creating API QLHS-FE.",
   "main": "index.js",
   "type": "module",
@@ -11,8 +14,13 @@
   "author": "Havold",
   "license": "ISC",
   "dependencies": {
+    "@prisma/client": "^5.21.1",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
     "nodemon": "^3.1.7"
+  },
+  "devDependencies": {
+    "prettier-plugin-prisma": "^5.0.0",
+    "prisma": "^5.21.1"
   }
 }

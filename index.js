@@ -1,12 +1,11 @@
 import express from "express";
 import dotenv from 'dotenv'
+import StudentRoutes from './routes/students.js'
 
 dotenv.config()
 const app = express();
 
-app.get('/', (req, res) => {
-    res.json('Hello World');
-})
+app.use('/api/students', StudentRoutes);
 
 const port = process.env.PORT || 3030
 
