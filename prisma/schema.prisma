@@ -22,94 +22,50 @@ model Admin {
 }
 
 model Student {
-  id        String   @id
+  id        Int      @id @default(autoincrement())
   username  String   @unique
   email     String   @unique
-  password  String
-  firstName String
-  lastName  String
   phone     String   @unique
+  password  String
   img       String?
-  address   String?
-  rank      Rank
-  birth     DateTime
+  fullName  String
   sex       Sex
+  birth     DateTime
+  address   String?
   createdAt DateTime @default(now())
 
-  parentId String
-  parent   Parent @relation(fields: [parentId], references: [id])
-
-  gradeId Int
-  grade   Grade @relation(fields: [gradeId], references: [id])
-
-  classId Int
-  class   Class @relation(fields: [classId], references: [id])
+  studentClasses StudentClass[]
+  DT_scoreBoards DT_ScoreBoard[]
 
   results    Result[]
   attendance Attendance[]
 }
 
-model Teacher {
-  id        String   @id
-  username  String   @unique
-  email     String   @unique
-  password  String
-  firstName String
-  lastName  String
-  phone     String   @unique
-  img       String?
-  address   String?
-  rank      Rank
-  birth     DateTime
-  sex       Sex
-  createdAt DateTime @default(now())
-
-  classId Int
-  class   Class @relation(fields: [classId], references: [id])
-
-  subjects Subject[]
-  lessons  Lesson[]
-}
-
-model Parent {
-  id        String   @id
-  username  String   @unique
-  email     String   @unique
-  password  String
-  firstName String
-  lastName  String
-  phone     String   @unique
-  address   String?
-  birth     DateTime
-  sex       Sex
-  createdAt DateTime @default(now())
-
-  students Student[]
-}
-
-model Subject {
+model SchoolYear {
   id        Int      @id @default(autoincrement())
-  name      String   @unique
+  value     Int
   createdAt DateTime @default(now())
 
-  teachers Teacher[]
-  lessons  Lesson[]
+  ClassSchoolYear ClassSchoolYear[]
+  scoreBoards     ScoreBoard[]
+  results         Result[]
+  reportsSubject  ReportSubject[]
+  reportsSemester ReportSemester[]
 }
 
 model Class {
   id        Int      @id @default(autoincrement())
   name      String
-  capacity  Int
   createdAt DateTime @default(now())
 
   gradeId Int
   grade   Grade @relation(fields: [gradeId], references: [id])
 
-  supervisorId String
-  supervisor   Teacher[]
+  DT_reportsSubject  DT_ReportSubject[]
+  DT_reportsSemester DT_ReportSemester[]
 
-  students      Student[]
-  lessons       Lesson[]
+  classSchoolYear ClassSchoolYear[]
+
   events        Event[]
   announcements Announcement[]
 }
@@ -119,83 +75,189 @@ model Grade {
   level     Int      @unique
   createdAt DateTime @default(now())
 
-  classes  Class[]
-  students Student[]
+  classes Class[]
 }
 
-model Lesson {
-  id        Int         @id @default(autoincrement())
+model Subject {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  scoreBoards    ScoreBoard[]
+  dtResults      DT_Result[]
+  reportsSubject ReportSubject[]
+}
+
+model Semester {
+  id        Int      @id @default(autoincrement())
   name      String
-  day       ScheduleDay
-  startTime DateTime
-  endTime   DateTime
-  createdAt DateTime    @default(now())
+  createdAt DateTime @default(now())
+
+  scoreBoards     ScoreBoard[]
+  reportsSubject  ReportSubject[]
+  reportsSemester ReportSemester[]
+}
+
+model TypeOfExam {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  scoreBoards ScoreBoard[]
+}
+
+model ScoreBoard {
+  id Int @id @default(autoincrement())
+
+  schoolYearId Int
+  schoolYear   SchoolYear @relation(fields: [schoolYearId], references: [id])
+
+  semesterId Int
+  semester   Semester @relation(fields: [semesterId], references: [id])
 
   subjectId Int
   subject   Subject @relation(fields: [subjectId], references: [id])
 
-  classId Int
-  class   Class @relation(fields: [classId], references: [id])
+  typeOfExamId Int
+  typeOfExam   TypeOfExam @relation(fields: [typeOfExamId], references: [id])
 
-  teacherId String
-  teacher   Teacher @relation(fields: [teacherId], references: [id])
-
-  attendances Attendance[]
-  exams       Exam[]
-  assignments Assignment[]
+  dtScoreBoards DT_ScoreBoard[]
 }
 
-model Exam {
-  id        Int      @id @default(autoincrement())
-  title     String
-  startTime DateTime
-  endTime   DateTime
-  type      ExamType
-  createdAt DateTime @default(now())
+model DT_ScoreBoard {
+  score Float
 
-  lessonId Int
-  lesson   Lesson @relation(fields: [lessonId], references: [id])
+  scoreBoardId Int
+  scoreBoard   ScoreBoard @relation(fields: [scoreBoardId], references: [id])
 
-  results Result[]
-}
+  studentId Int
+  student   Student @relation(fields: [studentId], references: [id])
 
-model Assignment {
-  id        Int      @id @default(autoincrement())
-  title     String
-  startDate DateTime
-  dueDate   DateTime
-  createdAt DateTime @default(now())
+  dtResults DT_Result[]
 
-  lessonId Int
-  lesson   Lesson @relation(fields: [lessonId], references: [id])
-
-  results Result[]
+  @@id([scoreBoardId, studentId])
 }
 
 model Result {
-  id    Int @id @default(autoincrement())
-  score Int
+  id       Int    @id @default(autoincrement())
+  avgSemI  Float? // Average score for semester I
+  avgSemII Float? // Average score for semester II
 
-  examId Int?
-  exam   Exam? @relation(fields: [examId], references: [id])
+  schoolYearId Int
+  schoolYear   SchoolYear @relation(fields: [schoolYearId], references: [id])
 
-  assignmentId Int?
-  assignment   Assignment? @relation(fields: [assignmentId], references: [id])
-
-  studentId String
+  studentId Int
   student   Student @relation(fields: [studentId], references: [id])
+
+  dtResults DT_Result[]
+}
+
+model DT_Result {
+  avgScore Float
+
+  resultId Int
+  result   Result @relation(fields: [resultId], references: [id])
+
+  subjectId Int
+  subject   Subject @relation(fields: [subjectId], references: [id])
+
+  scoreBoardId Int
+  studentId    Int
+  dtScoreBoard DT_ScoreBoard @relation(fields: [scoreBoardId, studentId], references: [scoreBoardId, studentId])
+
+  @@id([resultId, subjectId, scoreBoardId, studentId])
+}
+
+model ReportSubject {
+  id Int @id @default(autoincrement())
+
+  schoolYearId Int
+  schoolYear   SchoolYear @relation(fields: [schoolYearId], references: [id])
+
+  semesterId Int
+  semester   Semester @relation(fields: [semesterId], references: [id])
+
+  subjectId Int
+  subject   Subject @relation(fields: [subjectId], references: [id])
+
+  dtReportsSubject DT_ReportSubject[]
+}
+
+model DT_ReportSubject {
+  capacity     Int
+  numberPassed Int
+  percentage   Float
+
+  reportSubjectId Int
+  reportSubject   ReportSubject @relation(fields: [reportSubjectId], references: [id])
+
+  classId Int
+  class   Class @relation(fields: [classId], references: [id])
+
+  @@id([reportSubjectId, classId])
+}
+
+model ReportSemester {
+  id Int @id @default(autoincrement())
+
+  schoolYearId Int
+  schoolYear   SchoolYear @relation(fields: [schoolYearId], references: [id])
+
+  semesterId Int
+  semester   Semester @relation(fields: [semesterId], references: [id])
+
+  dtReportsSemester DT_ReportSemester[]
+}
+
+model DT_ReportSemester {
+  capacity     Int
+  numberPassed Int
+  percentage   Float
+
+  reportSemesterId Int
+  reportSemester   ReportSemester @relation(fields: [reportSemesterId], references: [id])
+
+  classId Int
+  class   Class @relation(fields: [classId], references: [id])
+
+  @@id([reportSemesterId, classId])
+}
+
+model ClassSchoolYear {
+  id Int @id @default(autoincrement())
+
+  schoolYearId Int
+  schoolYear   SchoolYear @relation(fields: [schoolYearId], references: [id])
+
+  classId Int
+  class   Class @relation(fields: [classId], references: [id])
+
+  studentsClasses StudentClass[]
+}
+
+model StudentClass {
+  id       Int @id @default(autoincrement())
+  capacity Int
+
+  studentId Int
+  student   Student @relation(fields: [studentId], references: [id])
+
+  classSchoolYearId Int
+  classSchoolYear   ClassSchoolYear @relation(fields: [classSchoolYearId], references: [id])
+}
+
+model Parameter {
+  id    Int    @id @default(autoincrement())
+  name  String
+  value Float
 }
 
 model Attendance {
-  int     Int      @id @default(autoincrement())
+  id      Int      @id @default(autoincrement())
   date    DateTime
   present Boolean
 
-  studentId String
+  studentId Int
   student   Student @relation(fields: [studentId], references: [id])
-
-  lessonId Int
-  lesson   Lesson @relation(fields: [lessonId], references: [id])
 }
 
 model Event {
@@ -222,23 +284,6 @@ model Announcement {
 enum Sex {
   Male
   Female
-}
-
-enum Rank {
-  Aplus
-  A
-  B
-  C
-  D
-  E
-  F
-}
-
-enum ExamType {
-  fifteen
-  fortyFive
-  midTerm
-  finalTerm
 }
 
 enum ScheduleDay {
