@@ -15,6 +15,9 @@ export const getAllTeachers = async (req, res) => {
             },
           };
           break;
+        case "teacherId":
+          query.id = value;
+          break;
         case "search":
           query.lastName = {
             contains: value,
