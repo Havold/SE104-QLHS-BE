@@ -1,10 +1,29 @@
+import prisma from "../client.js";
+
 export const getAllDetailClasses = async (req, res) => {
-  const { page, pageItems, ...searchParams } = req.query;
+  const { page, pageItems, ...queryParams } = req.query;
   const p = page ? parseInt(page) : 1;
   const pItems = pageItems ? parseInt(pageItems) : 5;
+  let query = {};
+  if (queryParams) {
+    for (const [key, value] of Object.entries(queryParams)) {
+      switch (key) {
+        case "search":
+          if (!query.class) query.class = {};
+          query.class.name = {
+            contains: value,
+            mode: "insensitive",
+          };
+          break;
+        default:
+          break;
+      }
+    }
+  }
   try {
     const [classes, count] = await prisma.$transaction([
       prisma.classSchoolYear.findMany({
+        where: query,
         skip: (p - 1) * pItems,
         take: pItems,
         include: {
@@ -21,7 +40,7 @@ export const getAllDetailClasses = async (req, res) => {
           },
         },
       }),
-      prisma.classSchoolYear.count(),
+      prisma.classSchoolYear.count({ where: query }),
     ]);
 
     // Xử lý kết quả trả về
