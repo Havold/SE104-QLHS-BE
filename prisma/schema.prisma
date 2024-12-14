@@ -61,13 +61,7 @@ model Class {
   gradeId Int
   grade   Grade @relation(fields: [gradeId], references: [id])
 
-  DT_reportsSubject  DT_ReportSubject[]
-  DT_reportsSemester DT_ReportSemester[]
-
   classSchoolYear ClassSchoolYear[]
-
-  events        Event[]
-  announcements Announcement[]
 }
 
 model Grade {
@@ -190,10 +184,10 @@ model DT_ReportSubject {
   reportSubjectId Int
   reportSubject   ReportSubject @relation(fields: [reportSubjectId], references: [id])
 
-  classId Int
-  class   Class @relation(fields: [classId], references: [id])
+  classSchoolYearId Int
+  classSchoolYear   ClassSchoolYear @relation(fields: [classSchoolYearId], references: [id])
 
-  @@id([reportSubjectId, classId])
+  @@id([reportSubjectId, classSchoolYearId])
 }
 
 model ReportSemester {
@@ -216,14 +210,15 @@ model DT_ReportSemester {
   reportSemesterId Int
   reportSemester   ReportSemester @relation(fields: [reportSemesterId], references: [id])
 
-  classId Int
-  class   Class @relation(fields: [classId], references: [id])
+  classSchoolYearId Int
+  classSchoolYear   ClassSchoolYear @relation(fields: [classSchoolYearId], references: [id])
 
-  @@id([reportSemesterId, classId])
+  @@id([reportSemesterId, classSchoolYearId])
 }
 
 model ClassSchoolYear {
-  id Int @id @default(autoincrement())
+  id       Int @id @default(autoincrement())
+  capacity Int
 
   schoolYearId Int
   schoolYear   SchoolYear @relation(fields: [schoolYearId], references: [id])
@@ -232,11 +227,16 @@ model ClassSchoolYear {
   class   Class @relation(fields: [classId], references: [id])
 
   studentsClasses StudentClass[]
+
+  DT_reportsSubject  DT_ReportSubject[]
+  DT_reportsSemester DT_ReportSemester[]
+
+  events        Event[]
+  announcements Announcement[]
 }
 
 model StudentClass {
-  id       Int @id @default(autoincrement())
-  capacity Int
+  id Int @id @default(autoincrement())
 
   studentId Int
   student   Student @relation(fields: [studentId], references: [id])
@@ -269,7 +269,7 @@ model Event {
   endTime   DateTime
   createdAt DateTime @default(now())
 
-  classes Class[]
+  classesSchoolYear ClassSchoolYear[]
 }
 
 model Announcement {
@@ -278,7 +278,7 @@ model Announcement {
   desc  String
   date  DateTime
 
-  classes Class[]
+  classesSchoolYear ClassSchoolYear[]
 }
 
 enum Sex {

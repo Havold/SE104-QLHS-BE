@@ -2,9 +2,6 @@
 CREATE TYPE "Sex" AS ENUM ('Male', 'Female');
 
 -- CreateEnum
-CREATE TYPE "Rank" AS ENUM ('Aplus', 'A', 'B', 'C', 'D', 'E', 'F');
-
--- CreateEnum
 CREATE TYPE "ScheduleDay" AS ENUM ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday');
 
 -- CreateTable
@@ -147,9 +144,9 @@ CREATE TABLE "DT_ReportSubject" (
     "numberPassed" INTEGER NOT NULL,
     "percentage" DOUBLE PRECISION NOT NULL,
     "reportSubjectId" INTEGER NOT NULL,
-    "classId" INTEGER NOT NULL,
+    "classSchoolYearId" INTEGER NOT NULL,
 
-    CONSTRAINT "DT_ReportSubject_pkey" PRIMARY KEY ("reportSubjectId","classId")
+    CONSTRAINT "DT_ReportSubject_pkey" PRIMARY KEY ("reportSubjectId","classSchoolYearId")
 );
 
 -- CreateTable
@@ -167,14 +164,15 @@ CREATE TABLE "DT_ReportSemester" (
     "numberPassed" INTEGER NOT NULL,
     "percentage" DOUBLE PRECISION NOT NULL,
     "reportSemesterId" INTEGER NOT NULL,
-    "classId" INTEGER NOT NULL,
+    "classSchoolYearId" INTEGER NOT NULL,
 
-    CONSTRAINT "DT_ReportSemester_pkey" PRIMARY KEY ("reportSemesterId","classId")
+    CONSTRAINT "DT_ReportSemester_pkey" PRIMARY KEY ("reportSemesterId","classSchoolYearId")
 );
 
 -- CreateTable
 CREATE TABLE "ClassSchoolYear" (
     "id" SERIAL NOT NULL,
+    "capacity" INTEGER NOT NULL,
     "schoolYearId" INTEGER NOT NULL,
     "classId" INTEGER NOT NULL,
 
@@ -184,7 +182,6 @@ CREATE TABLE "ClassSchoolYear" (
 -- CreateTable
 CREATE TABLE "StudentClass" (
     "id" SERIAL NOT NULL,
-    "capacity" INTEGER NOT NULL,
     "studentId" INTEGER NOT NULL,
     "classSchoolYearId" INTEGER NOT NULL,
 
@@ -234,13 +231,13 @@ CREATE TABLE "Announcement" (
 );
 
 -- CreateTable
-CREATE TABLE "_ClassToEvent" (
+CREATE TABLE "_ClassSchoolYearToEvent" (
     "A" INTEGER NOT NULL,
     "B" INTEGER NOT NULL
 );
 
 -- CreateTable
-CREATE TABLE "_AnnouncementToClass" (
+CREATE TABLE "_AnnouncementToClassSchoolYear" (
     "A" INTEGER NOT NULL,
     "B" INTEGER NOT NULL
 );
@@ -267,16 +264,16 @@ CREATE UNIQUE INDEX "Grade_level_key" ON "Grade"("level");
 CREATE UNIQUE INDEX "Subject_name_key" ON "Subject"("name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "_ClassToEvent_AB_unique" ON "_ClassToEvent"("A", "B");
+CREATE UNIQUE INDEX "_ClassSchoolYearToEvent_AB_unique" ON "_ClassSchoolYearToEvent"("A", "B");
 
 -- CreateIndex
-CREATE INDEX "_ClassToEvent_B_index" ON "_ClassToEvent"("B");
+CREATE INDEX "_ClassSchoolYearToEvent_B_index" ON "_ClassSchoolYearToEvent"("B");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "_AnnouncementToClass_AB_unique" ON "_AnnouncementToClass"("A", "B");
+CREATE UNIQUE INDEX "_AnnouncementToClassSchoolYear_AB_unique" ON "_AnnouncementToClassSchoolYear"("A", "B");
 
 -- CreateIndex
-CREATE INDEX "_AnnouncementToClass_B_index" ON "_AnnouncementToClass"("B");
+CREATE INDEX "_AnnouncementToClassSchoolYear_B_index" ON "_AnnouncementToClassSchoolYear"("B");
 
 -- AddForeignKey
 ALTER TABLE "Class" ADD CONSTRAINT "Class_gradeId_fkey" FOREIGN KEY ("gradeId") REFERENCES "Grade"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -327,7 +324,7 @@ ALTER TABLE "ReportSubject" ADD CONSTRAINT "ReportSubject_subjectId_fkey" FOREIG
 ALTER TABLE "DT_ReportSubject" ADD CONSTRAINT "DT_ReportSubject_reportSubjectId_fkey" FOREIGN KEY ("reportSubjectId") REFERENCES "ReportSubject"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "DT_ReportSubject" ADD CONSTRAINT "DT_ReportSubject_classId_fkey" FOREIGN KEY ("classId") REFERENCES "Class"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "DT_ReportSubject" ADD CONSTRAINT "DT_ReportSubject_classSchoolYearId_fkey" FOREIGN KEY ("classSchoolYearId") REFERENCES "ClassSchoolYear"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "ReportSemester" ADD CONSTRAINT "ReportSemester_schoolYearId_fkey" FOREIGN KEY ("schoolYearId") REFERENCES "SchoolYear"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -339,7 +336,7 @@ ALTER TABLE "ReportSemester" ADD CONSTRAINT "ReportSemester_semesterId_fkey" FOR
 ALTER TABLE "DT_ReportSemester" ADD CONSTRAINT "DT_ReportSemester_reportSemesterId_fkey" FOREIGN KEY ("reportSemesterId") REFERENCES "ReportSemester"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "DT_ReportSemester" ADD CONSTRAINT "DT_ReportSemester_classId_fkey" FOREIGN KEY ("classId") REFERENCES "Class"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "DT_ReportSemester" ADD CONSTRAINT "DT_ReportSemester_classSchoolYearId_fkey" FOREIGN KEY ("classSchoolYearId") REFERENCES "ClassSchoolYear"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "ClassSchoolYear" ADD CONSTRAINT "ClassSchoolYear_schoolYearId_fkey" FOREIGN KEY ("schoolYearId") REFERENCES "SchoolYear"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -357,13 +354,13 @@ ALTER TABLE "StudentClass" ADD CONSTRAINT "StudentClass_classSchoolYearId_fkey" 
 ALTER TABLE "Attendance" ADD CONSTRAINT "Attendance_studentId_fkey" FOREIGN KEY ("studentId") REFERENCES "Student"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "_ClassToEvent" ADD CONSTRAINT "_ClassToEvent_A_fkey" FOREIGN KEY ("A") REFERENCES "Class"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "_ClassSchoolYearToEvent" ADD CONSTRAINT "_ClassSchoolYearToEvent_A_fkey" FOREIGN KEY ("A") REFERENCES "ClassSchoolYear"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "_ClassToEvent" ADD CONSTRAINT "_ClassToEvent_B_fkey" FOREIGN KEY ("B") REFERENCES "Event"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "_ClassSchoolYearToEvent" ADD CONSTRAINT "_ClassSchoolYearToEvent_B_fkey" FOREIGN KEY ("B") REFERENCES "Event"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "_AnnouncementToClass" ADD CONSTRAINT "_AnnouncementToClass_A_fkey" FOREIGN KEY ("A") REFERENCES "Announcement"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "_AnnouncementToClassSchoolYear" ADD CONSTRAINT "_AnnouncementToClassSchoolYear_A_fkey" FOREIGN KEY ("A") REFERENCES "Announcement"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "_AnnouncementToClass" ADD CONSTRAINT "_AnnouncementToClass_B_fkey" FOREIGN KEY ("B") REFERENCES "Class"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "_AnnouncementToClassSchoolYear" ADD CONSTRAINT "_AnnouncementToClassSchoolYear_B_fkey" FOREIGN KEY ("B") REFERENCES "ClassSchoolYear"("id") ON DELETE CASCADE ON UPDATE CASCADE;
