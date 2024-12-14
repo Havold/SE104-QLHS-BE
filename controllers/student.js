@@ -5,13 +5,10 @@ export const getAllStudents = async (req, res) => {
   const p = page ? parseInt(page) : 1;
   const pItems = pageItems ? parseInt(pageItems) : 5;
   let query = {};
-  console.log(queryParams);
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
       switch (key) {
         case "search":
-          console.log("HELLO");
-
           query.fullName = {
             contains: value,
             mode: "insensitive",
@@ -28,6 +25,7 @@ export const getAllStudents = async (req, res) => {
       prisma.student.findMany({
         where: query,
         include: {
+          results: true,
           studentClasses: {
             include: {
               classSchoolYear: {
@@ -62,6 +60,7 @@ export const getStudent = async (req, res) => {
   try {
     const student = await prisma.student.findFirst({
       include: {
+        results: true,
         studentClasses: {
           include: {
             classSchoolYear: {
