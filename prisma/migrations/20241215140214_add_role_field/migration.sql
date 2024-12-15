@@ -11,6 +11,7 @@ CREATE TABLE "Admin" (
     "email" TEXT NOT NULL,
     "password" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "role" TEXT NOT NULL DEFAULT 'admin',
 
     CONSTRAINT "Admin_pkey" PRIMARY KEY ("id")
 );
@@ -28,6 +29,7 @@ CREATE TABLE "Student" (
     "birth" TIMESTAMP(3) NOT NULL,
     "address" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "roleId" INTEGER NOT NULL,
 
     CONSTRAINT "Student_pkey" PRIMARY KEY ("id")
 );
@@ -231,6 +233,22 @@ CREATE TABLE "Announcement" (
 );
 
 -- CreateTable
+CREATE TABLE "Role" (
+    "id" SERIAL NOT NULL,
+    "name" TEXT NOT NULL,
+
+    CONSTRAINT "Role_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Authority" (
+    "id" SERIAL NOT NULL,
+    "name" TEXT NOT NULL,
+
+    CONSTRAINT "Authority_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "_ClassSchoolYearToEvent" (
     "A" INTEGER NOT NULL,
     "B" INTEGER NOT NULL
@@ -238,6 +256,12 @@ CREATE TABLE "_ClassSchoolYearToEvent" (
 
 -- CreateTable
 CREATE TABLE "_AnnouncementToClassSchoolYear" (
+    "A" INTEGER NOT NULL,
+    "B" INTEGER NOT NULL
+);
+
+-- CreateTable
+CREATE TABLE "_AuthorityToRole" (
     "A" INTEGER NOT NULL,
     "B" INTEGER NOT NULL
 );
@@ -264,6 +288,12 @@ CREATE UNIQUE INDEX "Grade_level_key" ON "Grade"("level");
 CREATE UNIQUE INDEX "Subject_name_key" ON "Subject"("name");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Role_name_key" ON "Role"("name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Authority_name_key" ON "Authority"("name");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "_ClassSchoolYearToEvent_AB_unique" ON "_ClassSchoolYearToEvent"("A", "B");
 
 -- CreateIndex
@@ -274,6 +304,15 @@ CREATE UNIQUE INDEX "_AnnouncementToClassSchoolYear_AB_unique" ON "_Announcement
 
 -- CreateIndex
 CREATE INDEX "_AnnouncementToClassSchoolYear_B_index" ON "_AnnouncementToClassSchoolYear"("B");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "_AuthorityToRole_AB_unique" ON "_AuthorityToRole"("A", "B");
+
+-- CreateIndex
+CREATE INDEX "_AuthorityToRole_B_index" ON "_AuthorityToRole"("B");
+
+-- AddForeignKey
+ALTER TABLE "Student" ADD CONSTRAINT "Student_roleId_fkey" FOREIGN KEY ("roleId") REFERENCES "Role"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Class" ADD CONSTRAINT "Class_gradeId_fkey" FOREIGN KEY ("gradeId") REFERENCES "Grade"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -364,3 +403,9 @@ ALTER TABLE "_AnnouncementToClassSchoolYear" ADD CONSTRAINT "_AnnouncementToClas
 
 -- AddForeignKey
 ALTER TABLE "_AnnouncementToClassSchoolYear" ADD CONSTRAINT "_AnnouncementToClassSchoolYear_B_fkey" FOREIGN KEY ("B") REFERENCES "ClassSchoolYear"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_AuthorityToRole" ADD CONSTRAINT "_AuthorityToRole_A_fkey" FOREIGN KEY ("A") REFERENCES "Authority"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_AuthorityToRole" ADD CONSTRAINT "_AuthorityToRole_B_fkey" FOREIGN KEY ("B") REFERENCES "Role"("id") ON DELETE CASCADE ON UPDATE CASCADE;

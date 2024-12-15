@@ -4,6 +4,50 @@ import { PrismaClient, Sex } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
+  // Seed Authorities
+  await prisma.authority.createMany({
+    data: [
+      {
+        name: "Create",
+      },
+      { name: "View" },
+      { name: "Update" },
+      { name: "Delete" },
+    ],
+  });
+
+  const allAuthorities = await prisma.authority.findMany();
+
+  // Seed Role
+  const adminRole = await prisma.role.create({
+    data: {
+      name: "Admin",
+      authorities: {
+        connect: allAuthorities.map((auth) => ({ id: auth.id })),
+      },
+    },
+  });
+
+  const teacherRole = await prisma.role.create({
+    data: {
+      name: "Teacher",
+      authorities: {
+        connect: allAuthorities.map((auth) => ({ id: auth.id })),
+      },
+    },
+  });
+
+  const studentRole = await prisma.role.create({
+    data: {
+      name: "Student",
+      authorities: {
+        connect: [
+          { id: allAuthorities.find((auth) => auth.name === "View").id },
+        ],
+      },
+    },
+  });
+
   // Seed Admin
   await prisma.admin.createMany({
     data: [
@@ -64,6 +108,7 @@ async function main() {
         address: `${i}, ABC Street, Vietnam.`,
         sex: i % 2 === 0 ? Sex.Male : Sex.Female,
         birth: new Date("2007-01-01"),
+        roleId: i !== 1 ? studentRole.id : teacherRole.id,
       },
     });
   }

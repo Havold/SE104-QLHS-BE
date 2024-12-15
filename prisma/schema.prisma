@@ -19,11 +19,13 @@ model Admin {
   email     String   @unique
   password  String
   createdAt DateTime @default(now())
+  role      String   @default("admin")
 }
 
 model Student {
-  id        Int      @id @default(autoincrement())
-  username  String   @unique
+  id       Int    @id @default(autoincrement())
+  username String @unique
+
   email     String   @unique
   phone     String   @unique
   password  String
@@ -34,11 +36,13 @@ model Student {
   address   String?
   createdAt DateTime @default(now())
 
+  roleId Int
+  role   Role @relation(fields: [roleId], references: [id])
+
   studentClasses StudentClass[]
   DT_scoreBoards DT_ScoreBoard[]
-
-  results    Result[]
-  attendance Attendance[]
+  results        Result[]
+  attendance     Attendance[]
 }
 
 model SchoolYear {
@@ -279,6 +283,21 @@ model Announcement {
   date  DateTime
 
   classesSchoolYear ClassSchoolYear[]
+}
+
+model Role {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  authorities Authority[]
+  students    Student[]
+}
+
+model Authority {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  roles Role[]
 }
 
 enum Sex {
