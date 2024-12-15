@@ -5,7 +5,9 @@ import TeacherRoutes from "./routes/teachers.js";
 import SubjectRoutes from "./routes/subjects.js";
 import ClassRoutes from "./routes/classes.js";
 import DetailClassRoutes from "./routes/detailClasses.js";
+import AuthRoutes from "./routes/auth.js";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 
 dotenv.config();
 const app = express();
@@ -25,6 +27,9 @@ app.use(
   })
 );
 
+app.use(cookieParser());
+
+app.use("/api/auth", AuthRoutes);
 app.use("/api/students", StudentRoutes);
 app.use("/api/teachers", TeacherRoutes);
 app.use("/api/subjects", SubjectRoutes);
