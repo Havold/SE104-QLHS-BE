@@ -40,11 +40,6 @@ async function main() {
   const studentRole = await prisma.role.create({
     data: {
       name: "Student",
-      authorities: {
-        connect: [
-          { id: allAuthorities.find((auth) => auth.name === "View").id },
-        ],
-      },
     },
   });
 
