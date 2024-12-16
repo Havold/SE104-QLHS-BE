@@ -67,7 +67,11 @@ export const login = async (req, res) => {
     const user = await prisma.student.findUnique({
       where: { username },
       include: {
-        role: true,
+        role: {
+          include: {
+            authorities: true,
+          },
+        },
       },
     });
 
@@ -83,7 +87,16 @@ export const login = async (req, res) => {
     }
 
     // CREATE JWT TOKEN
-    const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: "7d" });
+    const token = jwt.sign(
+      {
+        id: user.id,
+        authorities: user.role.authorities.map((authority) => authority.name),
+      },
+      JWT_SECRET,
+      {
+        expiresIn: "7d",
+      }
+    );
 
     // EXCLUDE PASSWORD BEFORE SENDING RESPONSE
     const { password: _, ...others } = user;
