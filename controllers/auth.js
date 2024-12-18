@@ -1,7 +1,6 @@
 import prisma from "../client.js";
 import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
-const JWT_SECRET = "secretKey"; // Nên lưu key này trong biến môi trường .env
 
 // REGISTER
 export const register = async (req, res) => {
@@ -92,7 +91,7 @@ export const login = async (req, res) => {
         id: user.id,
         authorities: user.role.authorities.map((authority) => authority.name),
       },
-      JWT_SECRET,
+      process.env.JWT_SECRET,
       {
         expiresIn: "7d",
       }

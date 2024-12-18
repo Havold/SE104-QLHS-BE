@@ -1,5 +1,6 @@
 import { skip } from "@prisma/client/runtime/library";
 import prisma from "../client.js";
+import jwt from "jsonwebtoken";
 
 export const getAllSubjects = async (req, res) => {
   const { page, pageItems, ...queryParams } = req.query;
@@ -51,4 +52,36 @@ export const getSubject = async (req, res) => {
     console.log(error);
     res.status(500).json(error);
   }
+};
+
+// METHOD POST
+export const addSubject = (req, res) => {
+  const token = req.cookies.accessToken;
+
+  if (!token) {
+    return res.status(401).json("YOU ARE NOT LOGGED IN!");
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, async (err, userInfo) => {
+    if (err) {
+      return res.status(403).json("INVALID TOKEN!");
+    }
+
+    const existingSubject = await prisma.subject.findUnique({
+      where: {
+        name: req.body.name,
+      },
+    });
+
+    if (existingSubject) {
+      return res.status(403).json("This subject already exists");
+    }
+
+    await prisma.subject.create({
+      data: {
+        name: req.body.name,
+      },
+    });
+    return res.status(200).json("New subject has been added!");
+  });
 };
