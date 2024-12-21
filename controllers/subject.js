@@ -24,7 +24,7 @@ export const getAllSubjects = async (req, res) => {
   }
 
   try {
-    const count = await prisma.subject.count();
+    const count = await prisma.subject.count({ where: query });
     if (p * pItems > count) {
       p = Math.ceil(count / pItems);
     }
