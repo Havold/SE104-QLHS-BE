@@ -35,6 +35,7 @@ export const getAllClasses = async (req, res) => {
         name: true,
         grade: {
           select: {
+            id: true,
             level: true,
           },
         },
@@ -156,5 +157,59 @@ export const deleteClass = (req, res) => {
     });
 
     return res.status(200).json(`${cs.name} has been deleted!`);
+  });
+};
+
+// UPDATE CLASS
+export const updateClass = (req, res) => {
+  const token = req.cookies.accessToken;
+
+  if (!token) {
+    return res.status(401).json("YOU'RE NOT LOGGED IN!");
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, async (err, userInfo) => {
+    if (err) {
+      res.status(403).json("INVALID TOKEN");
+    }
+
+    const gradeId = req.body.grade ? parseInt(req.body.grade) : 1;
+    const grade = await prisma.grade.findUnique({
+      select: {
+        level: true,
+      },
+      where: {
+        id: gradeId,
+      },
+    });
+
+    const name = grade.level + req.body.name;
+    const existingClass = await prisma.class.findFirst({
+      where: {
+        name: name,
+      },
+    });
+
+    if (existingClass) {
+      return res.status(403).json("This class already exists!");
+    }
+
+    const classId = parseInt(req.params.id);
+
+    await prisma.class.update({
+      where: {
+        id: classId,
+      },
+      data: {
+        name: name,
+        grade: {
+          connect: {
+            id: gradeId,
+          },
+        },
+      },
+    });
+
+    return res.status(200).json("Updated class successfully!");
   });
 };
