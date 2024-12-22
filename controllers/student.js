@@ -89,6 +89,7 @@ export const getStudent = async (req, res) => {
         id: studentId,
       },
     });
+
     res.status(200).json(student);
   } catch (error) {
     console.log(error);
@@ -202,6 +203,7 @@ export const updateStudent = async (req, res) => {
     // Verify token
     const userInfo = jwt.verify(token, process.env.JWT_SECRET);
 
+    // Extract fields from request body
     const {
       username,
       sex,
@@ -214,54 +216,72 @@ export const updateStudent = async (req, res) => {
       img,
     } = req.body;
 
-    // Check if username already exists
-    let existingStudent = await prisma.student.findUnique({
-      where: {
-        username: username,
-      },
+    const studentId = parseInt(req.params.id);
+
+    // Fetch existing student
+    const existingStudent = await prisma.student.findUnique({
+      where: { id: studentId },
     });
 
-    if (existingStudent) {
-      return res.status(403).json("This username already exists!");
+    if (!existingStudent) {
+      return res.status(404).json("Student not found!");
     }
 
-    // Check if email already exists
-    existingStudent = await prisma.student.findUnique({
-      where: {
-        email: email,
-      },
-    });
-    if (existingStudent) {
-      return res.status(403).json("This email is already used!");
+    // Check if username is unique
+    if (username && username !== existingStudent.username) {
+      const usernameCheck = await prisma.student.findUnique({
+        where: { username },
+      });
+      if (usernameCheck) {
+        return res.status(403).json("This username already exists!");
+      }
     }
 
-    // Check if phone already exists
-    existingStudent = await prisma.student.findUnique({
-      where: {
-        phone: phone,
-      },
-    });
-    if (existingStudent) {
-      return res.status(403).json("This phone is already used!");
+    // Check if email is unique
+    if (email && email !== existingStudent.email) {
+      const emailCheck = await prisma.student.findUnique({
+        where: { email },
+      });
+      if (emailCheck) {
+        return res.status(403).json("This email is already used!");
+      }
     }
 
-    // Hash password
-    const salt = bcryptjs.genSaltSync(10);
-    const hashPassword = bcryptjs.hashSync(password, salt);
+    // Check if phone is unique
+    if (phone && phone !== existingStudent.phone) {
+      const phoneCheck = await prisma.student.findUnique({
+        where: { phone },
+      });
+      if (phoneCheck) {
+        return res.status(403).json("This phone is already used!");
+      }
+    }
 
-    // Create new student
-    await prisma.student.create({
-      data: {
-        username,
-        sex,
-        phone,
-        password: hashPassword,
-        fullName,
-        email,
-        address,
-        img,
-        birth: birthday,
-      },
+    // Hash password if it's provided
+    let hashPassword = existingStudent.password; // Keep the old password by default
+    if (password != hashPassword) {
+      // HASH PASSWORD
+      const salt = bcryptjs.genSaltSync(10);
+      hashPassword = bcryptjs.hashSync(password, salt);
+    }
+
+    // Prepare data for update
+    const updateData = {
+      username,
+      sex,
+      phone,
+      password: hashPassword,
+      fullName,
+      email,
+      address,
+      birth: birthday,
+      img: img,
+    };
+
+    // Update student
+    await prisma.student.update({
+      where: { id: studentId },
+      data: updateData,
     });
 
     // Send success response
@@ -276,3 +296,5 @@ export const updateStudent = async (req, res) => {
     });
   }
 };
+
+// DELETE A STUDENT
