@@ -4,6 +4,7 @@ import StudentRoutes from "./routes/students.js";
 import TeacherRoutes from "./routes/teachers.js";
 import SubjectRoutes from "./routes/subjects.js";
 import ClassRoutes from "./routes/classes.js";
+import GradeRoutes from "./routes/grades.js";
 import DetailClassRoutes from "./routes/detailClasses.js";
 import AuthRoutes from "./routes/auth.js";
 import cors from "cors";
@@ -34,6 +35,7 @@ app.use("/api/students", StudentRoutes);
 app.use("/api/teachers", TeacherRoutes);
 app.use("/api/subjects", SubjectRoutes);
 app.use("/api/classes", ClassRoutes);
+app.use("/api/grades", GradeRoutes);
 app.use("/api/detail-classes", DetailClassRoutes);
 
 const port = process.env.PORT || 3030;
