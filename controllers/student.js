@@ -298,3 +298,32 @@ export const updateStudent = async (req, res) => {
 };
 
 // DELETE A STUDENT
+export const deleteStudent = (req, res) => {
+  const token = req.cookies.accessToken;
+  if (!token) {
+    return res.status(401).json("YOU ARE NOT LOGGED IN!");
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, async (err, userInfo) => {
+    if (err) {
+      return res.status(403).json("INVALID TOKEN!");
+    }
+
+    const studentId = parseInt(req.params.id);
+
+    const student = await prisma.student.findUnique({
+      select: {
+        username: true,
+      },
+      where: {
+        id: studentId,
+      },
+    });
+    await prisma.student.delete({
+      where: {
+        id: studentId,
+      },
+    });
+    return res.status(200).json(`${student.username} has been deleted!`);
+  });
+};
