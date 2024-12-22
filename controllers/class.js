@@ -1,5 +1,7 @@
 import prisma from "../client.js";
+import jwt from "jsonwebtoken";
 
+// GET ALL CLASSES
 export const getAllClasses = async (req, res) => {
   const { page, pageItems, ...queryParams } = req.query;
   let p = page ? parseInt(page) : 1;
@@ -21,23 +23,26 @@ export const getAllClasses = async (req, res) => {
   }
 
   try {
-    const [classes, count] = await prisma.$transaction([
-      prisma.class.findMany({
-        where: query,
-        select: {
-          name: true,
-          grade: {
-            select: {
-              level: true,
-            },
+    const count = await prisma.class.count({ where: query });
+    if (p * pItems > count) {
+      p = Math.ceil(count / pItems);
+    }
+
+    const classes = await prisma.class.findMany({
+      where: query,
+      select: {
+        id: true,
+        name: true,
+        grade: {
+          select: {
+            level: true,
           },
         },
-        take: pItems,
-        skip: (p - 1) * pItems,
-      }),
-      prisma.class.count(),
-    ]);
-    res.status(200).json({ classes, totalCount: count });
+      },
+      take: pItems,
+      skip: (p - 1) * pItems,
+    });
+    res.status(200).json({ classes, totalCount: count, currentPage: p });
   } catch (error) {
     console.log("Error fetching Classes data: ", error.message);
     res.status(500).json({
@@ -48,6 +53,7 @@ export const getAllClasses = async (req, res) => {
   }
 };
 
+// GET A CLASS
 export const getClass = async (req, res) => {
   const classId = parseInt(req.params.id);
   try {
@@ -70,4 +76,85 @@ export const getClass = async (req, res) => {
     console.log(error);
     res.status(500).json(error);
   }
+};
+
+// ADD CLASS
+export const addClass = (req, res) => {
+  const token = req.cookies.accessToken;
+  if (!token) {
+    return res.status(401).json("YOU ARE NOT LOGIN!");
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, async (err, userInfo) => {
+    if (err) {
+      res.status(403).json("INVALID TOKEN!");
+    }
+    const gradeId = req.body.grade ? parseInt(req.body.grade) : 1;
+    const grade = await prisma.grade.findUnique({
+      select: {
+        level: true,
+      },
+      where: {
+        id: gradeId,
+      },
+    });
+
+    const name = grade.level + req.body.name;
+    const existingClass = await prisma.class.findFirst({
+      where: {
+        name: name,
+      },
+    });
+
+    if (existingClass) {
+      return res.status(403).json("This class already exists!");
+    }
+
+    await prisma.class.create({
+      data: {
+        name: name,
+        grade: {
+          connect: {
+            id: gradeId,
+          },
+        },
+      },
+    });
+
+    return res.status(200).json("New class has been added!");
+  });
+};
+
+// DELETE CLASS
+export const deleteClass = (req, res) => {
+  const token = req.cookies.accessToken;
+
+  if (!token) {
+    return res.status(401).json("YOU'RE NOT LOGGED IN!");
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, async (err, userInfo) => {
+    if (err) {
+      return res.status(403).json("INVALID TOKEN!");
+    }
+
+    const classId = parseInt(req.params.id);
+
+    const cs = await prisma.class.findFirst({
+      select: {
+        name: true,
+      },
+      where: {
+        id: classId,
+      },
+    });
+
+    await prisma.class.delete({
+      where: {
+        id: classId,
+      },
+    });
+
+    return res.status(200).json(`${cs.name} has been deleted!`);
+  });
 };
