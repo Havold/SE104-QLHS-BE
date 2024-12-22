@@ -1,9 +1,12 @@
 import prisma from "../client.js";
+import jwt from "jsonwebtoken";
+import bcryptjs from "bcryptjs";
 
+// GET ALL STUDENTS
 export const getAllStudents = async (req, res) => {
   const { page, pageItems, ...queryParams } = req.query;
-  const p = page ? parseInt(page) : 1;
-  const pItems = pageItems ? parseInt(pageItems) : 5;
+  let p = page ? parseInt(page) : 1;
+  let pItems = pageItems ? parseInt(pageItems) : 5;
   let query = {};
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
@@ -19,48 +22,54 @@ export const getAllStudents = async (req, res) => {
       }
     }
   }
-
   try {
-    const [students, count] = await prisma.$transaction([
-      prisma.student.findMany({
-        where: query,
-        include: {
-          results: true,
-          studentClasses: {
-            include: {
-              classSchoolYear: {
-                include: {
-                  schoolYear: true,
-                  class: {
-                    include: {
-                      grade: true,
-                    },
+    const count = await prisma.student.count({ where: query });
+    if (p * pItems > count) {
+      p = Math.ceil(count / pItems);
+    }
+
+    const students = await prisma.student.findMany({
+      where: query,
+      include: {
+        results: true,
+        studentClasses: {
+          include: {
+            classSchoolYear: {
+              include: {
+                schoolYear: true,
+                class: {
+                  include: {
+                    grade: true,
                   },
                 },
               },
             },
           },
         },
-        take: pItems,
-        skip: (p - 1) * pItems,
-      }),
-      prisma.student.count({
-        where: query,
-      }),
-    ]);
-    res.status(200).json({ students, totalCount: count });
+      },
+      take: pItems,
+      skip: (p - 1) * pItems,
+    });
+
+    res.status(200).json({ students, totalCount: count, currentPage: p });
   } catch (error) {
-    console.log(error);
-    res.status(500).json(error);
+    console.log("Error fetching Classes data: ", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error.",
+      error: error.message,
+    });
   }
 };
 
+// GET A STUDENT
 export const getStudent = async (req, res) => {
   const studentId = parseInt(req.params.id);
   try {
     const student = await prisma.student.findFirst({
       include: {
         results: true,
+        role: true,
         studentClasses: {
           include: {
             classSchoolYear: {
@@ -84,5 +93,186 @@ export const getStudent = async (req, res) => {
   } catch (error) {
     console.log(error);
     res.status(500).json(error);
+  }
+};
+
+// ADD A STUDENT
+export const addStudent = async (req, res) => {
+  const token = req.cookies.accessToken;
+
+  // Check if token is provided
+  if (!token) {
+    return res.status(401).json("YOU'RE NOT LOGGED IN!");
+  }
+
+  try {
+    // Verify token
+    const userInfo = jwt.verify(token, process.env.JWT_SECRET);
+
+    const {
+      username,
+      sex,
+      phone,
+      password,
+      fullName,
+      email,
+      address,
+      birthday,
+      img,
+    } = req.body;
+
+    // Check if username already exists
+    let existingStudent = await prisma.student.findUnique({
+      where: {
+        username: username,
+      },
+    });
+    if (existingStudent) {
+      return res.status(403).json("This username already exists!");
+    }
+
+    // Check if email already exists
+    existingStudent = await prisma.student.findUnique({
+      where: {
+        email: email,
+      },
+    });
+    if (existingStudent) {
+      return res.status(403).json("This email is already used!");
+    }
+
+    // Check if phone already exists
+    existingStudent = await prisma.student.findUnique({
+      where: {
+        phone: phone,
+      },
+    });
+    if (existingStudent) {
+      return res.status(403).json("This phone is already used!");
+    }
+
+    // Hash password
+    const salt = bcryptjs.genSaltSync(10);
+    const hashPassword = bcryptjs.hashSync(password, salt);
+    const roleId = 3;
+
+    // Create new student
+    await prisma.student.create({
+      data: {
+        username,
+        sex,
+        phone,
+        password: hashPassword,
+        fullName,
+        email,
+        address,
+        img,
+        birth: birthday,
+        role: {
+          connect: {
+            id: roleId,
+          },
+        },
+      },
+    });
+
+    // Send success response
+    res.status(200).json("New student has been added!");
+  } catch (error) {
+    // Handle errors
+    console.error("Error in adding new student :", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+// UPDATE STUDENT
+export const updateStudent = async (req, res) => {
+  const token = req.cookies.accessToken;
+
+  // Check if token is provided
+  if (!token) {
+    return res.status(401).json("YOU'RE NOT LOGGED IN!");
+  }
+
+  try {
+    // Verify token
+    const userInfo = jwt.verify(token, process.env.JWT_SECRET);
+
+    const {
+      username,
+      sex,
+      phone,
+      password,
+      fullName,
+      email,
+      address,
+      birthday,
+      img,
+    } = req.body;
+
+    // Check if username already exists
+    let existingStudent = await prisma.student.findUnique({
+      where: {
+        username: username,
+      },
+    });
+
+    if (existingStudent) {
+      return res.status(403).json("This username already exists!");
+    }
+
+    // Check if email already exists
+    existingStudent = await prisma.student.findUnique({
+      where: {
+        email: email,
+      },
+    });
+    if (existingStudent) {
+      return res.status(403).json("This email is already used!");
+    }
+
+    // Check if phone already exists
+    existingStudent = await prisma.student.findUnique({
+      where: {
+        phone: phone,
+      },
+    });
+    if (existingStudent) {
+      return res.status(403).json("This phone is already used!");
+    }
+
+    // Hash password
+    const salt = bcryptjs.genSaltSync(10);
+    const hashPassword = bcryptjs.hashSync(password, salt);
+
+    // Create new student
+    await prisma.student.create({
+      data: {
+        username,
+        sex,
+        phone,
+        password: hashPassword,
+        fullName,
+        email,
+        address,
+        img,
+        birth: birthday,
+      },
+    });
+
+    // Send success response
+    res.status(200).json("Updated student successfully!");
+  } catch (error) {
+    // Handle errors
+    console.error("Error in adding new student :", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
   }
 };
