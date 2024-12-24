@@ -11,6 +11,18 @@ export const getAllStudents = async (req, res) => {
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
       switch (key) {
+        case "classId": // Xử lý classId
+        case "schoolYearId": // Xử lý schoolYearId
+          if (!query.studentClasses)
+            query.studentClasses = { some: { classSchoolYear: {} } };
+          if (key === "classId") {
+            query.studentClasses.some.classSchoolYear.classId = parseInt(value);
+          }
+          if (key === "schoolYearId") {
+            query.studentClasses.some.classSchoolYear.schoolYearId =
+              parseInt(value);
+          }
+          break;
         case "search":
           query.fullName = {
             contains: value,
@@ -26,6 +38,10 @@ export const getAllStudents = async (req, res) => {
     const count = await prisma.student.count({ where: query });
     if (p * pItems > count) {
       p = Math.ceil(count / pItems);
+    }
+
+    if (p === 0) {
+      p = 1;
     }
 
     const students = await prisma.student.findMany({
