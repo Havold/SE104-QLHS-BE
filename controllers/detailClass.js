@@ -261,3 +261,55 @@ export const deleteDetailClass = (req, res) => {
       );
   });
 };
+
+// UPDATE DETAIL CLASS
+export const updateDetailClass = (req, res) => {
+  const token = req.cookies.accessToken;
+
+  if (!token) {
+    return res.status(401).json("YOU'RE NOT LOGGED IN!");
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, async (err, userInfo) => {
+    if (err) {
+      res.status(403).json("INVALID TOKEN");
+    }
+
+    const classId = parseInt(req.body.classId);
+    const schoolYearId = parseInt(req.body.schoolYearId);
+
+    const existingClass = await prisma.classSchoolYear.findFirst({
+      where: {
+        classId: classId,
+        schoolYearId: schoolYearId,
+      },
+    });
+
+    if (existingClass) {
+      return res
+        .status(403)
+        .json("This class has been added for this school year!");
+    }
+
+    await prisma.classSchoolYear.update({
+      where: {
+        id: parseInt(req.params.id),
+      },
+      data: {
+        class: {
+          connect: {
+            id: classId,
+          },
+        },
+
+        schoolYear: {
+          connect: {
+            id: schoolYearId,
+          },
+        },
+      },
+    });
+
+    return res.status(200).json("Updated this class successfully!");
+  });
+};
