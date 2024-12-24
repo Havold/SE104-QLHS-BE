@@ -6,6 +6,7 @@ import SubjectRoutes from "./routes/subjects.js";
 import ClassRoutes from "./routes/classes.js";
 import GradeRoutes from "./routes/grades.js";
 import DetailClassRoutes from "./routes/detailClasses.js";
+import SchoolYearRoutes from "./routes/schoolYears.js";
 import AuthRoutes from "./routes/auth.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -54,6 +55,7 @@ app.use("/api/subjects", SubjectRoutes);
 app.use("/api/classes", ClassRoutes);
 app.use("/api/grades", GradeRoutes);
 app.use("/api/detail-classes", DetailClassRoutes);
+app.use("/api/school-years", SchoolYearRoutes);
 
 const port = process.env.PORT || 3030;
 
