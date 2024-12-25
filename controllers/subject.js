@@ -28,6 +28,10 @@ export const getAllSubjects = async (req, res) => {
     if (p * pItems > count) {
       p = Math.ceil(count / pItems);
     }
+
+    if (p <= 0) {
+      p = 1;
+    }
     const subjects = await prisma.subject.findMany({
       where: query,
       take: pItems,

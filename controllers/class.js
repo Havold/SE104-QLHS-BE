@@ -28,6 +28,10 @@ export const getAllClasses = async (req, res) => {
       p = Math.ceil(count / pItems);
     }
 
+    if (p <= 0) {
+      p = 1;
+    }
+
     const classes = await prisma.class.findMany({
       where: query,
       select: {
