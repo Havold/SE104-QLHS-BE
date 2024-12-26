@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 
 // GET ALL CLASSES
 export const getAllClasses = async (req, res) => {
-  const { page, pageItems, ...queryParams } = req.query;
+  const { page, pageItems, type, ...queryParams } = req.query;
   let p = page ? parseInt(page) : 1;
   let pItems = pageItems ? parseInt(pageItems) : 5;
   let query = {};
@@ -24,6 +24,20 @@ export const getAllClasses = async (req, res) => {
 
   try {
     const count = await prisma.class.count({ where: query });
+
+    // Nếu type là "all", lấy toàn bộ dữ liệu mà không áp dụng phân trang
+    let classes;
+    if (type === "all") {
+      classes = await prisma.class.findMany({
+        where: query,
+        orderBy: {
+          ["name"]: "asc", // Sắp xếp theo trường và thứ tự
+        },
+      });
+      res.status(200).json({ classes, totalCount: count, currentPage: 1 });
+      return;
+    }
+
     if (p * pItems > count) {
       p = Math.ceil(count / pItems);
     }
@@ -32,7 +46,7 @@ export const getAllClasses = async (req, res) => {
       p = 1;
     }
 
-    const classes = await prisma.class.findMany({
+    classes = await prisma.class.findMany({
       where: query,
       select: {
         id: true,

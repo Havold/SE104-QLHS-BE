@@ -43,7 +43,7 @@ import jwt from "jsonwebtoken";
 // };
 
 export const getAllGrades = async (req, res) => {
-  const { page, pageItems, ...queryParams } = req.query;
+  const { page, pageItems, type, ...queryParams } = req.query;
   let p = page ? parseInt(page) : 1;
   let pItems = pageItems ? parseInt(pageItems) : 5;
   let query = {};
@@ -65,10 +65,23 @@ export const getAllGrades = async (req, res) => {
       p = Math.ceil(count / pItems);
     }
 
+    // Nếu type là "all", lấy toàn bộ dữ liệu mà không áp dụng phân trang
+    let grades;
+    if (type === "all") {
+      grades = await prisma.grade.findMany({
+        where: query,
+        orderBy: {
+          ["level"]: "asc", // Sắp xếp theo trường và thứ tự
+        },
+      });
+      res.status(200).json({ grades, totalCount: count, currentPage: 1 });
+      return;
+    }
+
     if (p <= 0) {
       p = 1;
     }
-    const grades = await prisma.grade.findMany({
+    grades = await prisma.grade.findMany({
       where: query,
       take: pItems,
       skip: (p - 1) * pItems,
@@ -86,13 +99,11 @@ export const getAllGrades = async (req, res) => {
       totalClasses: grade.classes.length, // Tổng số lớp của từng khối
     }));
 
-    res
-      .status(200)
-      .json({
-        grades: gradesWithClassCount,
-        totalCount: count,
-        currentPage: p,
-      });
+    res.status(200).json({
+      grades: gradesWithClassCount,
+      totalCount: count,
+      currentPage: p,
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json(error);
