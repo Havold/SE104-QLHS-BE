@@ -237,6 +237,7 @@ export const getStudent = async (req, res) => {
       include: {
         results: true,
         role: true,
+        DT_scoreBoards: true,
         studentClasses: {
           include: {
             classSchoolYear: {

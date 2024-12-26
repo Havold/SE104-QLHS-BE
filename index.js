@@ -9,6 +9,7 @@ import DetailClassRoutes from "./routes/detailClasses.js";
 import SchoolYearRoutes from "./routes/schoolYears.js";
 import StudentsClassRoutes from "./routes/studentsClass.js";
 import ScoreBoardRoutes from "./routes/scoreBoards.js";
+import DetailScoreBoardRoutes from "./routes/detailScoreBoards.js";
 import AuthRoutes from "./routes/auth.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -60,6 +61,7 @@ app.use("/api/detail-classes", DetailClassRoutes);
 app.use("/api/school-years", SchoolYearRoutes);
 app.use("/api/students-class", StudentsClassRoutes);
 app.use("/api/score-boards", ScoreBoardRoutes);
+app.use("/api/detail-score-boards", DetailScoreBoardRoutes);
 
 const port = process.env.PORT || 3030;
 
