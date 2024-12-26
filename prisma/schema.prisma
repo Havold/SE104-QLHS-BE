@@ -47,7 +47,7 @@ model Student {
 
 model SchoolYear {
   id        Int      @id @default(autoincrement())
-  value     Int
+  value     Int      @unique
   createdAt DateTime @default(now())
 
   ClassSchoolYear ClassSchoolYear[]
