@@ -11,10 +11,17 @@ export const getAllSchoolYears = async (req, res) => {
     for (const [key, value] of Object.entries(queryParams)) {
       switch (key) {
         case "search":
-          query.name = {
-            contains: value,
-            mode: "insensitive",
-          };
+          try {
+            if (value) {
+              const searchValue = parseInt(value);
+              query.value = {
+                equals: searchValue,
+              };
+            }
+          } catch (error) {
+            return res.status(500).json("Input search should be a number!");
+          }
+
           break;
         default:
           break;
@@ -41,6 +48,11 @@ export const getAllSchoolYears = async (req, res) => {
     if (p * pItems > count) {
       p = Math.ceil(count / pItems);
     }
+
+    if (p <= 0) {
+      p = 1;
+    }
+
     schoolYears = await prisma.schoolYear.findMany({
       where: query,
       take: pItems,
