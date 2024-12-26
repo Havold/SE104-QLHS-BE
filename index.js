@@ -8,6 +8,7 @@ import GradeRoutes from "./routes/grades.js";
 import DetailClassRoutes from "./routes/detailClasses.js";
 import SchoolYearRoutes from "./routes/schoolYears.js";
 import StudentsClassRoutes from "./routes/studentsClass.js";
+import ScoreBoardRoutes from "./routes/scoreBoards.js";
 import AuthRoutes from "./routes/auth.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -58,6 +59,7 @@ app.use("/api/grades", GradeRoutes);
 app.use("/api/detail-classes", DetailClassRoutes);
 app.use("/api/school-years", SchoolYearRoutes);
 app.use("/api/students-class", StudentsClassRoutes);
+app.use("/api/score-boards", ScoreBoardRoutes);
 
 const port = process.env.PORT || 3030;
 
