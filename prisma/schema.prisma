@@ -225,10 +225,10 @@ model ClassSchoolYear {
   capacity Int @default(0)
 
   schoolYearId Int
-  schoolYear   SchoolYear @relation(fields: [schoolYearId], references: [id])
+  schoolYear   SchoolYear @relation(fields: [schoolYearId], references: [id], onDelete: Cascade)
 
   classId Int
-  class   Class @relation(fields: [classId], references: [id])
+  class   Class @relation(fields: [classId], references: [id], onDelete: Cascade)
 
   studentsClasses StudentClass[]
 
@@ -243,10 +243,10 @@ model StudentClass {
   id Int @id @default(autoincrement())
 
   studentId Int
-  student   Student @relation(fields: [studentId], references: [id])
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   classSchoolYearId Int
-  classSchoolYear   ClassSchoolYear @relation(fields: [classSchoolYearId], references: [id])
+  classSchoolYear   ClassSchoolYear @relation(fields: [classSchoolYearId], references: [id], onDelete: Cascade)
 }
 
 model Parameter {
