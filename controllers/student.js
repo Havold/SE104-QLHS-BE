@@ -3,142 +3,47 @@ import jwt from "jsonwebtoken";
 import bcryptjs from "bcryptjs";
 
 // GET ALL STUDENTS
-// export const getAllStudents = async (req, res) => {
-//   const { page, subPage, pageItems, ...queryParams } = req.query;
-//   let p = page ? parseInt(page) : 1;
-//   let subP = subPage ? parseInt(subPage) : null;
-//   let pItems = pageItems ? parseInt(pageItems) : 5;
-//   let query = {};
-//   if (queryParams) {
-//     for (const [key, value] of Object.entries(queryParams)) {
-//       switch (key) {
-//         case "classId": // Xử lý classId
-//         case "schoolYearId": // Xử lý schoolYearId
-//           if (!query.studentClasses)
-//             query.studentClasses = { some: { classSchoolYear: {} } };
-//           if (key === "classId") {
-//             query.studentClasses.some.classSchoolYear.classId = parseInt(value);
-//           }
-//           if (key === "schoolYearId") {
-//             query.studentClasses.some.classSchoolYear.schoolYearId =
-//               parseInt(value);
-//           }
-//           break;
-//         case "type":
-//           if (value === "exclude") {
-//             query = {
-//               NOT: {
-//                 studentClasses: {
-//                   some: {
-//                     classSchoolYear: {
-//                       classId: parseInt(queryParams.classId),
-//                       schoolYearId: parseInt(queryParams.schoolYearId),
-//                     },
-//                   },
-//                 },
-//               },
-//             };
-//           }
-//           break;
-//         case "search":
-//           query.fullName = {
-//             contains: value,
-//             mode: "insensitive",
-//           };
-//           break;
-//         default:
-//           break;
-//       }
-//     }
-//   }
-//   try {
-//     if (subP) {
-//       p = subP;
-//     }
-
-//     const count = await prisma.student.count({ where: query });
-//     if (p * pItems > count) {
-//       p = Math.ceil(count / pItems);
-//     }
-
-//     if (p <= 0) {
-//       p = 1;
-//     }
-
-//     const students = await prisma.student.findMany({
-//       where: query,
-//       include: {
-//         results: true,
-//         studentClasses: {
-//           include: {
-//             classSchoolYear: {
-//               include: {
-//                 schoolYear: true,
-//                 class: {
-//                   include: {
-//                     grade: true,
-//                   },
-//                 },
-//               },
-//             },
-//           },
-//         },
-//       },
-//       take: pItems,
-//       skip: (p - 1) * pItems,
-//     });
-
-//     res.status(200).json({ students, totalCount: count, currentPage: p });
-//   } catch (error) {
-//     console.log("Error fetching Classes data: ", error.message);
-//     res.status(500).json({
-//       success: false,
-//       message: "Internal Server Error.",
-//       error: error.message,
-//     });
-//   }
-// };
-
 export const getAllStudents = async (req, res) => {
   const { page, subPage, pageItems, ...queryParams } = req.query;
   let p = page ? parseInt(page) : 1;
   let subP = subPage ? parseInt(subPage) : null;
   let pItems = pageItems ? parseInt(pageItems) : 5;
-
-  // Các điều kiện lọc
-  let excludeCondition = null;
-  let searchCondition = null;
-
+  let query = {};
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
       switch (key) {
-        case "classId":
-        case "schoolYearId":
-          if (!excludeCondition)
-            excludeCondition = {
+        case "classId": // Xử lý classId
+        case "schoolYearId": // Xử lý schoolYearId
+          if (!query.studentClasses)
+            query.studentClasses = { some: { classSchoolYear: {} } };
+          if (key === "classId") {
+            query.studentClasses.some.classSchoolYear.classId = parseInt(value);
+          }
+          if (key === "schoolYearId") {
+            query.studentClasses.some.classSchoolYear.schoolYearId =
+              parseInt(value);
+          }
+          break;
+        case "type":
+          if (value === "exclude") {
+            query = {
               NOT: {
                 studentClasses: {
                   some: {
-                    classSchoolYear: {},
+                    classSchoolYear: {
+                      classId: parseInt(queryParams.classId),
+                      schoolYearId: parseInt(queryParams.schoolYearId),
+                    },
                   },
                 },
               },
             };
-          if (key === "classId") {
-            excludeCondition.NOT.studentClasses.some.classSchoolYear.classId =
-              parseInt(value);
-          }
-          if (key === "schoolYearId") {
-            excludeCondition.NOT.studentClasses.some.classSchoolYear.schoolYearId =
-              parseInt(value);
           }
           break;
         case "search":
-          searchCondition = {
-            fullName: {
-              contains: value,
-              mode: "insensitive",
-            },
+          query.fullName = {
+            contains: value,
+            mode: "insensitive",
           };
           break;
         default:
@@ -146,79 +51,44 @@ export const getAllStudents = async (req, res) => {
       }
     }
   }
-
   try {
     if (subP) {
       p = subP;
     }
 
-    // Bước 1: Lọc loại trừ (exclude)
-    let initialStudents = [];
-    if (excludeCondition) {
-      initialStudents = await prisma.student.findMany({
-        where: excludeCondition,
-        include: {
-          results: true,
-          studentClasses: {
-            include: {
-              classSchoolYear: {
-                include: {
-                  schoolYear: true,
-                  class: {
-                    include: {
-                      grade: true,
-                    },
+    const count = await prisma.student.count({ where: query });
+    if (p * pItems > count) {
+      p = Math.ceil(count / pItems);
+    }
+
+    if (p <= 0) {
+      p = 1;
+    }
+
+    const students = await prisma.student.findMany({
+      where: query,
+      include: {
+        results: true,
+        studentClasses: {
+          include: {
+            classSchoolYear: {
+              include: {
+                schoolYear: true,
+                class: {
+                  include: {
+                    grade: true,
                   },
                 },
               },
             },
           },
         },
-      });
-    } else {
-      // Nếu không có excludeCondition, lấy tất cả học sinh
-      initialStudents = await prisma.student.findMany({
-        include: {
-          results: true,
-          studentClasses: {
-            include: {
-              classSchoolYear: {
-                include: {
-                  schoolYear: true,
-                  class: {
-                    include: {
-                      grade: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      });
-    }
+      },
+      take: pItems,
+      skip: (p - 1) * pItems,
+    });
 
-    // Bước 2: Lọc tìm kiếm (search)
-    let filteredStudents = initialStudents;
-    if (searchCondition) {
-      filteredStudents = initialStudents.filter((student) =>
-        student.fullName
-          .toLowerCase()
-          .includes(searchCondition.fullName.contains.toLowerCase())
-      );
-    }
-
-    // Phân trang
-    const totalCount = filteredStudents.length;
-    const startIdx = (p - 1) * pItems;
-    const paginatedStudents = filteredStudents.slice(
-      startIdx,
-      startIdx + pItems
-    );
-
-    res
-      .status(200)
-      .json({ students: paginatedStudents, totalCount, currentPage: p });
+    res.status(200).json({ students, totalCount: count, currentPage: p });
   } catch (error) {
     console.log("Error fetching Classes data: ", error.message);
     res.status(500).json({
@@ -228,6 +98,136 @@ export const getAllStudents = async (req, res) => {
     });
   }
 };
+
+// export const getAllStudents = async (req, res) => {
+//   const { page, subPage, pageItems, ...queryParams } = req.query;
+//   let p = page ? parseInt(page) : 1;
+//   let subP = subPage ? parseInt(subPage) : null;
+//   let pItems = pageItems ? parseInt(pageItems) : 5;
+
+//   // Các điều kiện lọc
+//   let excludeCondition = null;
+//   let searchCondition = null;
+
+//   if (queryParams) {
+//     for (const [key, value] of Object.entries(queryParams)) {
+//       switch (key) {
+//         case "classId":
+//         case "schoolYearId":
+//           if (!excludeCondition)
+//             excludeCondition = {
+//               NOT: {
+//                 studentClasses: {
+//                   some: {
+//                     classSchoolYear: {},
+//                   },
+//                 },
+//               },
+//             };
+//           if (key === "classId") {
+//             excludeCondition.NOT.studentClasses.some.classSchoolYear.classId =
+//               parseInt(value);
+//           }
+//           if (key === "schoolYearId") {
+//             excludeCondition.NOT.studentClasses.some.classSchoolYear.schoolYearId =
+//               parseInt(value);
+//           }
+//           break;
+//         case "search":
+//           searchCondition = {
+//             fullName: {
+//               contains: value,
+//               mode: "insensitive",
+//             },
+//           };
+//           break;
+//         default:
+//           break;
+//       }
+//     }
+//   }
+
+//   try {
+//     if (subP) {
+//       p = subP;
+//     }
+
+//     // Bước 1: Lọc loại trừ (exclude)
+//     let initialStudents = [];
+//     if (excludeCondition) {
+//       initialStudents = await prisma.student.findMany({
+//         where: excludeCondition,
+//         include: {
+//           results: true,
+//           studentClasses: {
+//             include: {
+//               classSchoolYear: {
+//                 include: {
+//                   schoolYear: true,
+//                   class: {
+//                     include: {
+//                       grade: true,
+//                     },
+//                   },
+//                 },
+//               },
+//             },
+//           },
+//         },
+//       });
+//     } else {
+//       // Nếu không có excludeCondition, lấy tất cả học sinh
+//       initialStudents = await prisma.student.findMany({
+//         include: {
+//           results: true,
+//           studentClasses: {
+//             include: {
+//               classSchoolYear: {
+//                 include: {
+//                   schoolYear: true,
+//                   class: {
+//                     include: {
+//                       grade: true,
+//                     },
+//                   },
+//                 },
+//               },
+//             },
+//           },
+//         },
+//       });
+//     }
+
+//     // Bước 2: Lọc tìm kiếm (search)
+//     let filteredStudents = initialStudents;
+//     if (searchCondition) {
+//       filteredStudents = initialStudents.filter((student) =>
+//         student.fullName
+//           .toLowerCase()
+//           .includes(searchCondition.fullName.contains.toLowerCase())
+//       );
+//     }
+
+//     // Phân trang
+//     const totalCount = filteredStudents.length;
+//     const startIdx = (p - 1) * pItems;
+//     const paginatedStudents = filteredStudents.slice(
+//       startIdx,
+//       startIdx + pItems
+//     );
+
+//     res
+//       .status(200)
+//       .json({ students: paginatedStudents, totalCount, currentPage: p });
+//   } catch (error) {
+//     console.log("Error fetching Classes data: ", error.message);
+//     res.status(500).json({
+//       success: false,
+//       message: "Internal Server Error.",
+//       error: error.message,
+//     });
+//   }
+// };
 
 // GET A STUDENT
 export const getStudent = async (req, res) => {
