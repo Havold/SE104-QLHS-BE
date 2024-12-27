@@ -128,7 +128,7 @@ model DT_ScoreBoard {
   scoreBoard   ScoreBoard @relation(fields: [scoreBoardId], references: [id], onDelete: Cascade)
 
   studentId Int
-  student   Student @relation(fields: [studentId], references: [id])
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   dtResults DT_Result[]
 
@@ -153,14 +153,14 @@ model DT_Result {
   avgScore Float
 
   resultId Int
-  result   Result @relation(fields: [resultId], references: [id])
+  result   Result @relation(fields: [resultId], references: [id], onDelete: Cascade)
 
   subjectId Int
-  subject   Subject @relation(fields: [subjectId], references: [id])
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
 
   scoreBoardId Int
   studentId    Int
-  dtScoreBoard DT_ScoreBoard @relation(fields: [scoreBoardId, studentId], references: [scoreBoardId, studentId])
+  dtScoreBoard DT_ScoreBoard @relation(fields: [scoreBoardId, studentId], references: [scoreBoardId, studentId], onDelete: Cascade)
 
   @@id([resultId, subjectId, scoreBoardId, studentId])
 }
@@ -169,13 +169,13 @@ model ReportSubject {
   id Int @id @default(autoincrement())
 
   schoolYearId Int
-  schoolYear   SchoolYear @relation(fields: [schoolYearId], references: [id])
+  schoolYear   SchoolYear @relation(fields: [schoolYearId], references: [id], onDelete: Cascade)
 
   semesterId Int
-  semester   Semester @relation(fields: [semesterId], references: [id])
+  semester   Semester @relation(fields: [semesterId], references: [id], onDelete: Cascade)
 
   subjectId Int
-  subject   Subject @relation(fields: [subjectId], references: [id])
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
 
   dtReportsSubject DT_ReportSubject[]
 }
@@ -186,10 +186,10 @@ model DT_ReportSubject {
   percentage   Float
 
   reportSubjectId Int
-  reportSubject   ReportSubject @relation(fields: [reportSubjectId], references: [id])
+  reportSubject   ReportSubject @relation(fields: [reportSubjectId], references: [id], onDelete: Cascade)
 
   classSchoolYearId Int
-  classSchoolYear   ClassSchoolYear @relation(fields: [classSchoolYearId], references: [id])
+  classSchoolYear   ClassSchoolYear @relation(fields: [classSchoolYearId], references: [id], onDelete: Cascade)
 
   @@id([reportSubjectId, classSchoolYearId])
 }
@@ -198,10 +198,10 @@ model ReportSemester {
   id Int @id @default(autoincrement())
 
   schoolYearId Int
-  schoolYear   SchoolYear @relation(fields: [schoolYearId], references: [id])
+  schoolYear   SchoolYear @relation(fields: [schoolYearId], references: [id], onDelete: Cascade)
 
   semesterId Int
-  semester   Semester @relation(fields: [semesterId], references: [id])
+  semester   Semester @relation(fields: [semesterId], references: [id], onDelete: Cascade)
 
   dtReportsSemester DT_ReportSemester[]
 }
@@ -212,10 +212,10 @@ model DT_ReportSemester {
   percentage   Float
 
   reportSemesterId Int
-  reportSemester   ReportSemester @relation(fields: [reportSemesterId], references: [id])
+  reportSemester   ReportSemester @relation(fields: [reportSemesterId], references: [id], onDelete: Cascade)
 
   classSchoolYearId Int
-  classSchoolYear   ClassSchoolYear @relation(fields: [classSchoolYearId], references: [id])
+  classSchoolYear   ClassSchoolYear @relation(fields: [classSchoolYearId], references: [id], onDelete: Cascade)
 
   @@id([reportSemesterId, classSchoolYearId])
 }
