@@ -125,7 +125,7 @@ model DT_ScoreBoard {
   score Float?
 
   scoreBoardId Int
-  scoreBoard   ScoreBoard @relation(fields: [scoreBoardId], references: [id])
+  scoreBoard   ScoreBoard @relation(fields: [scoreBoardId], references: [id], onDelete: Cascade)
 
   studentId Int
   student   Student @relation(fields: [studentId], references: [id])

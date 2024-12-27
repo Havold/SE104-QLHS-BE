@@ -156,8 +156,100 @@ export const addScoreBoard = (req, res) => {
   });
 };
 
-export const deleteScoreBoard = (req, res) => {};
-export const updateScoreBoard = (req, res) => {};
+export const deleteScoreBoard = (req, res) => {
+  const token = req.cookies.accessToken;
+
+  if (!token) {
+    return res.status(401).json("YOU'RE NOT LOGGED IN!");
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, async (err, userInfo) => {
+    if (err) {
+      return res.status(403).json("INVALID TOKEN!");
+    }
+
+    const scoreBoardId = parseInt(req.params.id);
+
+    // const scoreBoard = await prisma.scoreBoard.findFirst({
+    //   where: {
+    //     id: scoreBoardId,
+    //   },
+    // });
+
+    await prisma.scoreBoard.delete({
+      where: {
+        id: scoreBoardId,
+      },
+    });
+
+    return res.status(200).json("This score board has been deleted!");
+  });
+};
+export const updateScoreBoard = (req, res) => {
+  const token = req.cookies.accessToken;
+
+  if (!token) {
+    return res.status(401).json("YOU'RE NOT LOGGED IN!");
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, async (err, userInfo) => {
+    if (err) {
+      res.status(403).json("INVALID TOKEN");
+    }
+    const subjectId = parseInt(req.body.subjectId);
+    const schoolYearId = parseInt(req.body.schoolYearId);
+    const semesterId = parseInt(req.body.semesterId);
+    const typeOfExamId = parseInt(req.body.typeOfExamId);
+
+    const existingScoreBoard = await prisma.scoreBoard.findFirst({
+      where: {
+        subjectId,
+        schoolYearId,
+        semesterId,
+        typeOfExamId,
+      },
+    });
+
+    if (existingScoreBoard) {
+      return res
+        .status(403)
+        .json("This score board has been added for this school year!");
+    }
+
+    await prisma.scoreBoard.update({
+      where: {
+        id: parseInt(req.params.id),
+      },
+      data: {
+        subject: {
+          connect: {
+            id: subjectId,
+          },
+        },
+
+        schoolYear: {
+          connect: {
+            id: schoolYearId,
+          },
+        },
+
+        semester: {
+          connect: {
+            id: semesterId,
+          },
+        },
+
+        typeOfExam: {
+          connect: {
+            id: typeOfExamId,
+          },
+        },
+      },
+    });
+
+    return res.status(200).json("Updated this score board successfully!");
+  });
+};
 
 export const getStudentsWithoutScoreInBoard = async (req, res) => {
   const { page, subPage, pageItems, type, ...queryParams } = req.query;
