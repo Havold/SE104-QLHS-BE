@@ -385,6 +385,18 @@ export const updateStudentsScore = async (req, res) => {
     // Execute all updates
     await Promise.all(updatePromises);
 
+    const scoreBoard = await prisma.scoreBoard.findFirst({
+      where: {
+        id: scoreBoardId,
+      },
+    });
+    // Tính toán và cập nhật điểm trung bình học kỳ cho từng học sinh
+    const schoolYearId = scoreBoard.schoolYearId;
+    const semesterId = scoreBoard.semesterId;
+
+    // Cập nhật điểm trung bình cho học sinh
+    await updateStudentAverageScores(schoolYearId, semesterId);
+
     return res.status(200).json("All scores updated successfully!");
   } catch (error) {
     if (error.name === "JsonWebTokenError") {
@@ -396,5 +408,87 @@ export const updateStudentsScore = async (req, res) => {
       message: "Internal server error.",
       error: error.message,
     });
+  }
+};
+
+const updateStudentAverageScores = async (schoolYearId, semesterId) => {
+  // Lấy danh sách tất cả học sinh
+  const students = await prisma.student.findMany();
+
+  for (const student of students) {
+    // Lấy điểm của từng học sinh trong kỳ học và năm học
+    const dtScores = await prisma.dT_ScoreBoard.findMany({
+      where: {
+        studentId: student.id,
+        scoreBoard: {
+          schoolYearId: schoolYearId,
+          semesterId: semesterId,
+        },
+      },
+      include: {
+        scoreBoard: {
+          include: {
+            subject: true, // Lấy thông tin môn học
+            typeOfExam: true, // Lấy thông tin hình thức kiểm tra
+          },
+        },
+      },
+    });
+
+    let totalScore = 0;
+    let totalSubjects = 0;
+
+    for (const score of dtScores) {
+      let weightedScore;
+
+      // Kiểm tra loại kiểm tra để áp dụng công thức tính điểm đúng
+      if (score.scoreBoard.typeOfExam.name === "45'") {
+        // Nếu là loại kiểm tra 45', tính điểm = score * 2
+        weightedScore = score.score * 2;
+      } else {
+        // Nếu không, chỉ sử dụng điểm như là
+        weightedScore = score.score;
+      }
+
+      // Tính điểm trung bình môn
+      totalScore += weightedScore;
+      totalSubjects++;
+    }
+
+    // Tính điểm trung bình cho học kỳ
+    const avgSemesterScore = totalSubjects > 0 ? totalScore / totalSubjects : 0;
+
+    // Cập nhật điểm trung bình vào bảng Result
+    // Tìm hoặc tạo bản ghi Result cho học sinh
+    const existingResult = await prisma.result.findFirst({
+      where: {
+        studentId: student.id,
+        schoolYearId,
+      },
+    });
+
+    if (existingResult) {
+      // Cập nhật bản ghi đã tồn tại
+      await prisma.result.update({
+        where: {
+          id: existingResult.id, // Sử dụng id của bản ghi đã tồn tại
+        },
+        data: {
+          avgSemI: semesterId === 1 ? avgSemesterScore : existingResult.avgSemI,
+          avgSemII:
+            semesterId === 2 ? avgSemesterScore : existingResult.avgSemII,
+        },
+      });
+    } else {
+      // Tạo mới bản ghi nếu chưa tồn tại
+      await prisma.result.create({
+        data: {
+          studentId: student.id,
+          schoolYearId: schoolYearId,
+          avgSemI: semesterId === 1 ? avgSemesterScore : null,
+          avgSemII: semesterId === 2 ? avgSemesterScore : null,
+        },
+      });
+    }
   }
 };
