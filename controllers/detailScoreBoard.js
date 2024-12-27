@@ -48,3 +48,50 @@ export const addStudentsToDTScoreBoard = (req, res) => {
     }
   });
 };
+
+export const removeStudentFromDTScoreBoard = (req, res) => {
+  const token = req.cookies.accessToken;
+  if (!token) {
+    return res.status(401).json("YOU ARE NOT LOGIN!");
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, async (err, userInfo) => {
+    if (err) {
+      return res.status(403).json("INVALID TOKEN!");
+    }
+
+    try {
+      const scoreBoardId = parseInt(req.params.id);
+      const studentId = parseInt(req.params.studentId);
+
+      const existingScoreBoard = await prisma.scoreBoard.findUnique({
+        where: {
+          id: scoreBoardId,
+        },
+      });
+
+      await prisma.dT_ScoreBoard.delete({
+        where: {
+          scoreBoardId_studentId: {
+            scoreBoardId: scoreBoardId,
+            studentId: studentId,
+          },
+        },
+      });
+
+      // Cập nhật capacity
+      // const currentCapacity = existingClass.classSchoolYear.capacity - 1;
+      // await prisma.classSchoolYear.update({
+      //   where: { id: existingClass.classSchoolYear.id },
+      //   data: { capacity: currentCapacity },
+      // });
+
+      return res
+        .status(200)
+        .json("Students have been removed from this score board!");
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json("Something went wrong!");
+    }
+  });
+};
