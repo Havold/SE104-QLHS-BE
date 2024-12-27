@@ -1,3 +1,6 @@
+import prisma from "../client.js";
+import jwt from "jsonwebtoken";
+
 export const getAllScoreBoard = async (req, res) => {
   const { page, pageItems, type, ...queryParams } = req.query;
   let p = page ? parseInt(page) : 1;
@@ -90,7 +93,69 @@ export const getScoreBoard = async (req, res) => {
     res.status(500).json(error);
   }
 };
-export const addScoreBoard = (req, res) => {};
+export const addScoreBoard = (req, res) => {
+  const token = req.cookies.accessToken;
+  if (!token) {
+    return res.status(401).json("YOU ARE NOT LOGIN!");
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, async (err, userInfo) => {
+    if (err) {
+      res.status(403).json("INVALID TOKEN!");
+    }
+
+    const subjectId = parseInt(req.body.subjectId);
+    const schoolYearId = parseInt(req.body.schoolYearId);
+    const semesterId = parseInt(req.body.semesterId);
+    const typeOfExamId = parseInt(req.body.typeOfExamId);
+
+    console.log(typeOfExamId);
+
+    const existingScoreBoard = await prisma.scoreBoard.findFirst({
+      where: {
+        subjectId: subjectId,
+        schoolYearId: schoolYearId,
+        semesterId: semesterId,
+        typeOfExamId,
+      },
+    });
+
+    if (existingScoreBoard) {
+      return res.status(403).json("This score board has been created!!");
+    }
+
+    await prisma.scoreBoard.create({
+      data: {
+        subject: {
+          connect: {
+            id: subjectId,
+          },
+        },
+
+        schoolYear: {
+          connect: {
+            id: schoolYearId,
+          },
+        },
+
+        semester: {
+          connect: {
+            id: semesterId,
+          },
+        },
+
+        typeOfExam: {
+          connect: {
+            id: typeOfExamId,
+          },
+        },
+      },
+    });
+
+    return res.status(200).json("New score board has been created!");
+  });
+};
+
 export const deleteScoreBoard = (req, res) => {};
 export const updateScoreBoard = (req, res) => {};
 
