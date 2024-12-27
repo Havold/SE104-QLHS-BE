@@ -66,6 +66,7 @@ model Class {
   grade   Grade @relation(fields: [gradeId], references: [id])
 
   classSchoolYear ClassSchoolYear[]
+  ScoreBoard      ScoreBoard[]
 }
 
 model Grade {
@@ -108,6 +109,9 @@ model ScoreBoard {
 
   schoolYearId Int
   schoolYear   SchoolYear @relation(fields: [schoolYearId], references: [id])
+
+  classId Int
+  class   Class @relation(fields: [classId], references: [id])
 
   semesterId Int
   semester   Semester @relation(fields: [semesterId], references: [id])
@@ -227,8 +231,8 @@ model ClassSchoolYear {
   schoolYearId Int
   schoolYear   SchoolYear @relation(fields: [schoolYearId], references: [id], onDelete: Cascade)
 
-  classId Int
-  class   Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+  classId Int?
+  class   Class? @relation(fields: [classId], references: [id], onDelete: Cascade)
 
   studentsClasses StudentClass[]
 

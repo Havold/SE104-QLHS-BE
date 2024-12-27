@@ -189,32 +189,32 @@ async function main() {
   });
 
   // Seed ScoreBoard
-  const subjectMath = await prisma.subject.findFirst({
-    where: { name: "Math" },
-  });
-  const semester1 = await prisma.semester.findFirst({
-    where: { name: "Semester 1" },
-  });
-  const typeOfExam = await prisma.typeOfExam.findFirst(); // Giả định có dữ liệu trong bảng TypeOfExam
+  // const subjectMath = await prisma.subject.findFirst({
+  //   where: { name: "Math" },
+  // });
+  // const semester1 = await prisma.semester.findFirst({
+  //   where: { name: "Semester 1" },
+  // });
+  // const typeOfExam = await prisma.typeOfExam.findFirst(); // Giả định có dữ liệu trong bảng TypeOfExam
 
-  const scoreBoard = await prisma.scoreBoard.create({
-    data: {
-      schoolYearId: schoolYear2023?.id ?? 1,
-      semesterId: semester1?.id ?? 1,
-      subjectId: subjectMath?.id ?? 1,
-      typeOfExamId: typeOfExam?.id ?? 1,
-    },
-  });
+  // const scoreBoard = await prisma.scoreBoard.create({
+  //   data: {
+  //     schoolYearId: schoolYear2023?.id ?? 1,
+  //     semesterId: semester1?.id ?? 1,
+  //     subjectId: subjectMath?.id ?? 1,
+  //     typeOfExamId: typeOfExam?.id ?? 1,
+  //   },
+  // });
 
-  // Seed DT_ScoreBoard
+  // // Seed DT_ScoreBoard
 
-  const dtScoreBoard = await prisma.dT_ScoreBoard.create({
-    data: {
-      score: 7.8,
-      scoreBoardId: scoreBoard.id,
-      studentId: student1?.id ?? 1,
-    },
-  });
+  // const dtScoreBoard = await prisma.dT_ScoreBoard.create({
+  //   data: {
+  //     score: 7.8,
+  //     scoreBoardId: scoreBoard.id,
+  //     studentId: student1?.id ?? 1,
+  //   },
+  // });
 
   // Seed Results
   const result = await prisma.result.create({

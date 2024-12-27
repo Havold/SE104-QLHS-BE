@@ -28,6 +28,14 @@ export const getAllClasses = async (req, res) => {
     // Nếu type là "all", lấy toàn bộ dữ liệu mà không áp dụng phân trang
     let classes;
     if (type === "all") {
+      const schoolYearId = req.query.schoolYearId;
+      if (schoolYearId) {
+        query.classSchoolYear = {
+          some: {
+            schoolYearId: parseInt(schoolYearId),
+          },
+        };
+      }
       classes = await prisma.class.findMany({
         where: query,
         orderBy: {

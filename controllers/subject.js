@@ -1,4 +1,3 @@
-import { skip } from "@prisma/client/runtime/library";
 import prisma from "../client.js";
 import jwt from "jsonwebtoken";
 

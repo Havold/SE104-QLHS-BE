@@ -49,6 +49,7 @@ export const getAllScoreBoard = async (req, res) => {
       where: query,
       include: {
         schoolYear: true,
+        class: true,
         semester: true,
         subject: true,
         typeOfExam: true,
@@ -93,6 +94,7 @@ export const getScoreBoard = async (req, res) => {
     res.status(500).json(error);
   }
 };
+
 export const addScoreBoard = (req, res) => {
   const token = req.cookies.accessToken;
   if (!token) {
@@ -101,58 +103,99 @@ export const addScoreBoard = (req, res) => {
 
   jwt.verify(token, process.env.JWT_SECRET, async (err, userInfo) => {
     if (err) {
-      res.status(403).json("INVALID TOKEN!");
+      return res.status(403).json("INVALID TOKEN!");
     }
 
     const subjectId = parseInt(req.body.subjectId);
     const schoolYearId = parseInt(req.body.schoolYearId);
+    const classId = parseInt(req.body.classId);
     const semesterId = parseInt(req.body.semesterId);
     const typeOfExamId = parseInt(req.body.typeOfExamId);
 
-    console.log(typeOfExamId);
+    try {
+      // Kiểm tra xem ScoreBoard đã tồn tại chưa
+      const existingScoreBoard = await prisma.scoreBoard.findFirst({
+        where: {
+          subjectId,
+          schoolYearId,
+          semesterId,
+          classId,
+          typeOfExamId,
+        },
+      });
 
-    const existingScoreBoard = await prisma.scoreBoard.findFirst({
-      where: {
-        subjectId: subjectId,
-        schoolYearId: schoolYearId,
-        semesterId: semesterId,
-        typeOfExamId,
-      },
-    });
+      if (existingScoreBoard) {
+        return res.status(403).json("This score board has been created!!");
+      }
 
-    if (existingScoreBoard) {
-      return res.status(403).json("This score board has been created!!");
+      console.log(classId);
+      // Tạo bản ghi ScoreBoard
+      const newScoreBoard = await prisma.scoreBoard.create({
+        data: {
+          subject: {
+            connect: {
+              id: subjectId,
+            },
+          },
+          schoolYear: {
+            connect: {
+              id: schoolYearId,
+            },
+          },
+          class: {
+            connect: {
+              id: classId,
+            },
+          },
+          semester: {
+            connect: {
+              id: semesterId,
+            },
+          },
+          typeOfExam: {
+            connect: {
+              id: typeOfExamId,
+            },
+          },
+        },
+      });
+
+      // Lấy danh sách studentId từ classId
+      const students = await prisma.studentClass.findMany({
+        where: {
+          classSchoolYear: {
+            classId: classId,
+          },
+        },
+        select: {
+          studentId: true,
+        },
+      });
+
+      if (students.length === 0) {
+        return res
+          .status(400)
+          .json("No students found for the selected class.");
+      }
+
+      // Tạo các bản ghi DT_ScoreBoard
+      const dtScoreBoards = students.map((student) => ({
+        scoreBoardId: newScoreBoard.id,
+        studentId: student.studentId,
+        score: null, // Giá trị mặc định ban đầu
+      }));
+
+      await prisma.dT_ScoreBoard.createMany({
+        data: dtScoreBoards,
+      });
+
+      return res
+        .status(200)
+        .json("New score board and DT_ScoreBoard have been created!");
+    } catch (error) {
+      console.error("Error creating ScoreBoard:", error.message);
+      return res.status(500).json("Internal Server Error.");
     }
-
-    await prisma.scoreBoard.create({
-      data: {
-        subject: {
-          connect: {
-            id: subjectId,
-          },
-        },
-
-        schoolYear: {
-          connect: {
-            id: schoolYearId,
-          },
-        },
-
-        semester: {
-          connect: {
-            id: semesterId,
-          },
-        },
-
-        typeOfExam: {
-          connect: {
-            id: typeOfExamId,
-          },
-        },
-      },
-    });
-
-    return res.status(200).json("New score board has been created!");
   });
 };
 
@@ -185,6 +228,7 @@ export const deleteScoreBoard = (req, res) => {
     return res.status(200).json("This score board has been deleted!");
   });
 };
+
 export const updateScoreBoard = (req, res) => {
   const token = req.cookies.accessToken;
 

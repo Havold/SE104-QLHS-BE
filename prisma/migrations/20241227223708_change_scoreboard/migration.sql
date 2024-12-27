@@ -92,6 +92,7 @@ CREATE TABLE "TypeOfExam" (
 CREATE TABLE "ScoreBoard" (
     "id" SERIAL NOT NULL,
     "schoolYearId" INTEGER NOT NULL,
+    "classId" INTEGER NOT NULL,
     "semesterId" INTEGER NOT NULL,
     "subjectId" INTEGER NOT NULL,
     "typeOfExamId" INTEGER NOT NULL,
@@ -101,7 +102,7 @@ CREATE TABLE "ScoreBoard" (
 
 -- CreateTable
 CREATE TABLE "DT_ScoreBoard" (
-    "score" DOUBLE PRECISION NOT NULL,
+    "score" DOUBLE PRECISION,
     "scoreBoardId" INTEGER NOT NULL,
     "studentId" INTEGER NOT NULL,
 
@@ -174,9 +175,9 @@ CREATE TABLE "DT_ReportSemester" (
 -- CreateTable
 CREATE TABLE "ClassSchoolYear" (
     "id" SERIAL NOT NULL,
-    "capacity" INTEGER NOT NULL,
+    "capacity" INTEGER NOT NULL DEFAULT 0,
     "schoolYearId" INTEGER NOT NULL,
-    "classId" INTEGER NOT NULL,
+    "classId" INTEGER,
 
     CONSTRAINT "ClassSchoolYear_pkey" PRIMARY KEY ("id")
 );
@@ -282,6 +283,9 @@ CREATE UNIQUE INDEX "Student_email_key" ON "Student"("email");
 CREATE UNIQUE INDEX "Student_phone_key" ON "Student"("phone");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "SchoolYear_value_key" ON "SchoolYear"("value");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Grade_level_key" ON "Grade"("level");
 
 -- CreateIndex
@@ -321,6 +325,9 @@ ALTER TABLE "Class" ADD CONSTRAINT "Class_gradeId_fkey" FOREIGN KEY ("gradeId") 
 ALTER TABLE "ScoreBoard" ADD CONSTRAINT "ScoreBoard_schoolYearId_fkey" FOREIGN KEY ("schoolYearId") REFERENCES "SchoolYear"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "ScoreBoard" ADD CONSTRAINT "ScoreBoard_classId_fkey" FOREIGN KEY ("classId") REFERENCES "Class"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "ScoreBoard" ADD CONSTRAINT "ScoreBoard_semesterId_fkey" FOREIGN KEY ("semesterId") REFERENCES "Semester"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -330,10 +337,10 @@ ALTER TABLE "ScoreBoard" ADD CONSTRAINT "ScoreBoard_subjectId_fkey" FOREIGN KEY 
 ALTER TABLE "ScoreBoard" ADD CONSTRAINT "ScoreBoard_typeOfExamId_fkey" FOREIGN KEY ("typeOfExamId") REFERENCES "TypeOfExam"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "DT_ScoreBoard" ADD CONSTRAINT "DT_ScoreBoard_scoreBoardId_fkey" FOREIGN KEY ("scoreBoardId") REFERENCES "ScoreBoard"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "DT_ScoreBoard" ADD CONSTRAINT "DT_ScoreBoard_scoreBoardId_fkey" FOREIGN KEY ("scoreBoardId") REFERENCES "ScoreBoard"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "DT_ScoreBoard" ADD CONSTRAINT "DT_ScoreBoard_studentId_fkey" FOREIGN KEY ("studentId") REFERENCES "Student"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "DT_ScoreBoard" ADD CONSTRAINT "DT_ScoreBoard_studentId_fkey" FOREIGN KEY ("studentId") REFERENCES "Student"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Result" ADD CONSTRAINT "Result_schoolYearId_fkey" FOREIGN KEY ("schoolYearId") REFERENCES "SchoolYear"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -342,52 +349,52 @@ ALTER TABLE "Result" ADD CONSTRAINT "Result_schoolYearId_fkey" FOREIGN KEY ("sch
 ALTER TABLE "Result" ADD CONSTRAINT "Result_studentId_fkey" FOREIGN KEY ("studentId") REFERENCES "Student"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "DT_Result" ADD CONSTRAINT "DT_Result_resultId_fkey" FOREIGN KEY ("resultId") REFERENCES "Result"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "DT_Result" ADD CONSTRAINT "DT_Result_resultId_fkey" FOREIGN KEY ("resultId") REFERENCES "Result"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "DT_Result" ADD CONSTRAINT "DT_Result_subjectId_fkey" FOREIGN KEY ("subjectId") REFERENCES "Subject"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "DT_Result" ADD CONSTRAINT "DT_Result_subjectId_fkey" FOREIGN KEY ("subjectId") REFERENCES "Subject"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "DT_Result" ADD CONSTRAINT "DT_Result_scoreBoardId_studentId_fkey" FOREIGN KEY ("scoreBoardId", "studentId") REFERENCES "DT_ScoreBoard"("scoreBoardId", "studentId") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "DT_Result" ADD CONSTRAINT "DT_Result_scoreBoardId_studentId_fkey" FOREIGN KEY ("scoreBoardId", "studentId") REFERENCES "DT_ScoreBoard"("scoreBoardId", "studentId") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ReportSubject" ADD CONSTRAINT "ReportSubject_schoolYearId_fkey" FOREIGN KEY ("schoolYearId") REFERENCES "SchoolYear"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "ReportSubject" ADD CONSTRAINT "ReportSubject_schoolYearId_fkey" FOREIGN KEY ("schoolYearId") REFERENCES "SchoolYear"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ReportSubject" ADD CONSTRAINT "ReportSubject_semesterId_fkey" FOREIGN KEY ("semesterId") REFERENCES "Semester"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "ReportSubject" ADD CONSTRAINT "ReportSubject_semesterId_fkey" FOREIGN KEY ("semesterId") REFERENCES "Semester"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ReportSubject" ADD CONSTRAINT "ReportSubject_subjectId_fkey" FOREIGN KEY ("subjectId") REFERENCES "Subject"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "ReportSubject" ADD CONSTRAINT "ReportSubject_subjectId_fkey" FOREIGN KEY ("subjectId") REFERENCES "Subject"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "DT_ReportSubject" ADD CONSTRAINT "DT_ReportSubject_reportSubjectId_fkey" FOREIGN KEY ("reportSubjectId") REFERENCES "ReportSubject"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "DT_ReportSubject" ADD CONSTRAINT "DT_ReportSubject_reportSubjectId_fkey" FOREIGN KEY ("reportSubjectId") REFERENCES "ReportSubject"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "DT_ReportSubject" ADD CONSTRAINT "DT_ReportSubject_classSchoolYearId_fkey" FOREIGN KEY ("classSchoolYearId") REFERENCES "ClassSchoolYear"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "DT_ReportSubject" ADD CONSTRAINT "DT_ReportSubject_classSchoolYearId_fkey" FOREIGN KEY ("classSchoolYearId") REFERENCES "ClassSchoolYear"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ReportSemester" ADD CONSTRAINT "ReportSemester_schoolYearId_fkey" FOREIGN KEY ("schoolYearId") REFERENCES "SchoolYear"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "ReportSemester" ADD CONSTRAINT "ReportSemester_schoolYearId_fkey" FOREIGN KEY ("schoolYearId") REFERENCES "SchoolYear"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ReportSemester" ADD CONSTRAINT "ReportSemester_semesterId_fkey" FOREIGN KEY ("semesterId") REFERENCES "Semester"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "ReportSemester" ADD CONSTRAINT "ReportSemester_semesterId_fkey" FOREIGN KEY ("semesterId") REFERENCES "Semester"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "DT_ReportSemester" ADD CONSTRAINT "DT_ReportSemester_reportSemesterId_fkey" FOREIGN KEY ("reportSemesterId") REFERENCES "ReportSemester"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "DT_ReportSemester" ADD CONSTRAINT "DT_ReportSemester_reportSemesterId_fkey" FOREIGN KEY ("reportSemesterId") REFERENCES "ReportSemester"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "DT_ReportSemester" ADD CONSTRAINT "DT_ReportSemester_classSchoolYearId_fkey" FOREIGN KEY ("classSchoolYearId") REFERENCES "ClassSchoolYear"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "DT_ReportSemester" ADD CONSTRAINT "DT_ReportSemester_classSchoolYearId_fkey" FOREIGN KEY ("classSchoolYearId") REFERENCES "ClassSchoolYear"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ClassSchoolYear" ADD CONSTRAINT "ClassSchoolYear_schoolYearId_fkey" FOREIGN KEY ("schoolYearId") REFERENCES "SchoolYear"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "ClassSchoolYear" ADD CONSTRAINT "ClassSchoolYear_schoolYearId_fkey" FOREIGN KEY ("schoolYearId") REFERENCES "SchoolYear"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ClassSchoolYear" ADD CONSTRAINT "ClassSchoolYear_classId_fkey" FOREIGN KEY ("classId") REFERENCES "Class"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "ClassSchoolYear" ADD CONSTRAINT "ClassSchoolYear_classId_fkey" FOREIGN KEY ("classId") REFERENCES "Class"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "StudentClass" ADD CONSTRAINT "StudentClass_studentId_fkey" FOREIGN KEY ("studentId") REFERENCES "Student"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "StudentClass" ADD CONSTRAINT "StudentClass_studentId_fkey" FOREIGN KEY ("studentId") REFERENCES "Student"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "StudentClass" ADD CONSTRAINT "StudentClass_classSchoolYearId_fkey" FOREIGN KEY ("classSchoolYearId") REFERENCES "ClassSchoolYear"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "StudentClass" ADD CONSTRAINT "StudentClass_classSchoolYearId_fkey" FOREIGN KEY ("classSchoolYearId") REFERENCES "ClassSchoolYear"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Attendance" ADD CONSTRAINT "Attendance_studentId_fkey" FOREIGN KEY ("studentId") REFERENCES "Student"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
