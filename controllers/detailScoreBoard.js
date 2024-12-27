@@ -79,13 +79,6 @@ export const removeStudentFromDTScoreBoard = (req, res) => {
         },
       });
 
-      // Cập nhật capacity
-      // const currentCapacity = existingClass.classSchoolYear.capacity - 1;
-      // await prisma.classSchoolYear.update({
-      //   where: { id: existingClass.classSchoolYear.id },
-      //   data: { capacity: currentCapacity },
-      // });
-
       return res
         .status(200)
         .json("Students have been removed from this score board!");

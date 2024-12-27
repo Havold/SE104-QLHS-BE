@@ -337,3 +337,64 @@ export const getStudentsWithoutScoreInBoard = async (req, res) => {
     });
   }
 };
+
+export const updateStudentsScore = async (req, res) => {
+  const token = req.cookies.accessToken;
+
+  if (!token) {
+    return res.status(401).json("YOU'RE NOT LOGGED IN!");
+  }
+
+  try {
+    // Verify token
+    const userInfo = jwt.verify(token, process.env.JWT_SECRET);
+
+    const scoreBoardId = parseInt(req.params.id);
+    // Validate request body
+    const { updatedScores } = req.body;
+    if (!Array.isArray(updatedScores) || updatedScores.length === 0) {
+      return res
+        .status(400)
+        .json("Invalid updates format! Must be a non-empty array.");
+    }
+
+    console.log(updatedScores);
+
+    // Prepare update promises
+    const updatePromises = updatedScores.map((updatedScore) => {
+      let { studentId, score } = updatedScore;
+      // Validate fields
+      if (typeof score !== "number" || score < 0 || score > 10) {
+        throw new Error("Invalid update data! Ensure all fields are correct.");
+      }
+
+      studentId = parseInt(studentId);
+      return prisma.dT_ScoreBoard.update({
+        where: {
+          scoreBoardId_studentId: {
+            scoreBoardId,
+            studentId,
+          },
+        },
+        data: {
+          score,
+        },
+      });
+    });
+
+    // Execute all updates
+    await Promise.all(updatePromises);
+
+    return res.status(200).json("All scores updated successfully!");
+  } catch (error) {
+    if (error.name === "JsonWebTokenError") {
+      return res.status(403).json("INVALID TOKEN!");
+    }
+
+    console.error("Error updating scores:", error);
+    return res.status(500).json({
+      message: "Internal server error.",
+      error: error.message,
+    });
+  }
+};
