@@ -66,17 +66,17 @@ export const getAllStudents = async (req, res) => {
             };
           }
           break;
-        case username:
+        case "username":
           query.username = {
             contains: value,
             mode: "insensitive",
           };
-        case email:
+        case "email":
           query.email = {
             contains: value,
             mode: "insensitive",
           };
-        case address:
+        case "address":
           query.address = {
             contains: value,
             mode: "insensitive",
