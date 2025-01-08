@@ -9,12 +9,16 @@ export const getAllDetailClasses = async (req, res) => {
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
       switch (key) {
-        case "schoolYear":
-          query.classSchoolYear = {
-            where: {
-              schoolYearId: parseInt(value), // Chuyển sang số nguyên
-            },
+        case "schoolYearId":
+          query.schoolYear = {
+            id: parseInt(value), // Chuyển sang số nguyên
           };
+          break;
+        case "classId":
+          query.class = {
+            id: parseInt(value), // Chuyển sang số nguyên
+          };
+          break;
         case "search":
           if (!query.class) query.class = {};
           query.class.name = {
@@ -28,6 +32,7 @@ export const getAllDetailClasses = async (req, res) => {
     }
   }
   try {
+    console.log(query);
     const count = await prisma.classSchoolYear.count({ where: query });
     if (p * pItems > count) {
       p = Math.ceil(count / pItems);
