@@ -10,6 +10,11 @@ export const getAllClasses = async (req, res) => {
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
       switch (key) {
+        case "grade":
+          query.grade = {
+            id: parseInt(value),
+          };
+          break;
         case "search":
           query.name = {
             contains: value,
