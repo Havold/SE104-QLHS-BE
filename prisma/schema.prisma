@@ -63,7 +63,7 @@ model Class {
   createdAt DateTime @default(now())
 
   gradeId Int
-  grade   Grade @relation(fields: [gradeId], references: [id])
+  grade   Grade @relation(fields: [gradeId], references: [id], onDelete: Cascade)
 
   classSchoolYear ClassSchoolYear[]
   ScoreBoard      ScoreBoard[]
@@ -108,19 +108,19 @@ model ScoreBoard {
   id Int @id @default(autoincrement())
 
   schoolYearId Int
-  schoolYear   SchoolYear @relation(fields: [schoolYearId], references: [id])
+  schoolYear   SchoolYear @relation(fields: [schoolYearId], references: [id], onDelete: Cascade)
 
   classId Int
-  class   Class @relation(fields: [classId], references: [id])
+  class   Class @relation(fields: [classId], references: [id], onDelete: Cascade)
 
   semesterId Int
-  semester   Semester @relation(fields: [semesterId], references: [id])
+  semester   Semester @relation(fields: [semesterId], references: [id], onDelete: Cascade)
 
   subjectId Int
-  subject   Subject @relation(fields: [subjectId], references: [id])
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
 
   typeOfExamId Int
-  typeOfExam   TypeOfExam @relation(fields: [typeOfExamId], references: [id])
+  typeOfExam   TypeOfExam @relation(fields: [typeOfExamId], references: [id], onDelete: Cascade)
 
   dtScoreBoards DT_ScoreBoard[]
 }
@@ -145,10 +145,10 @@ model Result {
   avgSemII Float? // Average score for semester II
 
   schoolYearId Int
-  schoolYear   SchoolYear @relation(fields: [schoolYearId], references: [id])
+  schoolYear   SchoolYear @relation(fields: [schoolYearId], references: [id], onDelete: Cascade)
 
   studentId Int
-  student   Student @relation(fields: [studentId], references: [id])
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   dtResults DT_Result[]
 }
@@ -265,7 +265,7 @@ model Attendance {
   present Boolean
 
   studentId Int
-  student   Student @relation(fields: [studentId], references: [id])
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
 
 model Event {
