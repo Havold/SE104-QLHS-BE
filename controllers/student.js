@@ -1,6 +1,8 @@
 import prisma from "../client.js";
 import jwt from "jsonwebtoken";
 import bcryptjs from "bcryptjs";
+import moment from "moment/moment.js";
+import { json } from "express";
 
 // GET ALL STUDENTS
 export const getAllStudents = async (req, res) => {
@@ -12,6 +14,30 @@ export const getAllStudents = async (req, res) => {
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
       switch (key) {
+        case "phone":
+          query.phone = {
+            contains: value,
+            mode: "insensitive",
+          };
+          break;
+        case "email":
+          query.email = {
+            contains: value,
+            mode: "insensitive",
+          };
+          break;
+        case "sex":
+          query.sex = {
+            contains: value,
+            mode: "insensitive",
+          };
+          break;
+        case "address":
+          query.address = {
+            contains: value,
+            mode: "insensitive",
+          };
+          break;
         case "classId": // Xử lý classId
         case "schoolYearId": // Xử lý schoolYearId
           if (!query.studentClasses)
@@ -40,6 +66,26 @@ export const getAllStudents = async (req, res) => {
             };
           }
           break;
+        case username:
+          query.username = {
+            contains: value,
+            mode: "insensitive",
+          };
+        case email:
+          query.email = {
+            contains: value,
+            mode: "insensitive",
+          };
+        case address:
+          query.address = {
+            contains: value,
+            mode: "insensitive",
+          };
+        case "phone":
+          query.phone = {
+            contains: value,
+            mode: "insensitive",
+          };
         case "search":
           query.fullName = {
             contains: value,
@@ -318,6 +364,26 @@ export const addStudent = async (req, res) => {
     });
     if (existingStudent) {
       return res.status(403).json("This phone is already used!");
+    }
+
+    // Kiểm tra tuổi
+    const minAge = await prisma.parameter.findFirst({
+      where: {
+        name: "Min Age",
+      },
+    });
+    const maxAge = await prisma.parameter.findFirst({
+      where: {
+        name: "Max Age",
+      },
+    });
+    if (
+      moment().diff(moment(birthday), "years") < minAge.value ||
+      moment().diff(moment(birthday), "years") > maxAge.value
+    ) {
+      return res
+        .status(401)
+        .json(`Age must be between ${minAge.value} and ${maxAge.value}`);
     }
 
     // Hash password
