@@ -13,6 +13,8 @@ import DetailScoreBoardRoutes from "./routes/detailScoreBoards.js";
 import SemesterRoutes from "./routes/semesters.js";
 import TypesOfExamRoutes from "./routes/typesOfExam.js";
 import SubjectReportsRoutes from "./routes/subjectReports.js";
+import SemesterReportsRoutes from "./routes/semesterReports.js";
+import RulesRoutes from "./routes/rules.js";
 import AuthRoutes from "./routes/auth.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -68,6 +70,8 @@ app.use("/api/detail-score-boards", DetailScoreBoardRoutes);
 app.use("/api/semesters", SemesterRoutes);
 app.use("/api/types-of-exam", TypesOfExamRoutes);
 app.use("/api/subject-reports", SubjectReportsRoutes);
+app.use("/api/semester-reports", SemesterReportsRoutes);
+app.use("/api/rules", RulesRoutes);
 
 const port = process.env.PORT || 3030;
 

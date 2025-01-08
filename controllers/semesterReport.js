@@ -1,7 +1,7 @@
 import prisma from "../client.js";
 import jwt from "jsonwebtoken";
 
-export const getAllSubjectReports = async (req, res) => {
+export const getAllSemesterReports = async (req, res) => {
   const { page, pageItems, type, ...queryParams } = req.query;
   let p = page ? parseInt(page) : 1;
   let pItems = pageItems ? parseInt(pageItems) : 5;
@@ -22,12 +22,12 @@ export const getAllSubjectReports = async (req, res) => {
   }
 
   try {
-    const count = await prisma.reportSubject.count({ where: query });
+    const count = await prisma.reportSemester.count({ where: query });
 
     // Nếu type là "all", lấy toàn bộ dữ liệu mà không áp dụng phân trang
-    let subjectReports;
+    let semesterReports;
     if (type === "all") {
-      subjectReports = await prisma.reportSubject.findMany({
+      semesterReports = await prisma.reportSemester.findMany({
         where: query,
         orderBy: {
           ["id"]: "asc", // Sắp xếp theo trường và thứ tự
@@ -35,7 +35,7 @@ export const getAllSubjectReports = async (req, res) => {
       });
       res
         .status(200)
-        .json({ subjectReports, totalCount: count, currentPage: 1 });
+        .json({ semesterReports, totalCount: count, currentPage: 1 });
       return;
     }
 
@@ -47,19 +47,20 @@ export const getAllSubjectReports = async (req, res) => {
       p = 1;
     }
 
-    subjectReports = await prisma.reportSubject.findMany({
+    semesterReports = await prisma.reportSemester.findMany({
       where: query,
       include: {
         schoolYear: true,
         semester: true,
-        subject: true,
       },
       take: pItems,
       skip: (p - 1) * pItems,
     });
-    res.status(200).json({ subjectReports, totalCount: count, currentPage: p });
+    res
+      .status(200)
+      .json({ semesterReports, totalCount: count, currentPage: p });
   } catch (error) {
-    console.log("Error fetching Score boards data: ", error.message);
+    console.log("Error fetching Semester Reports data: ", error.message);
     res.status(500).json({
       success: false,
       message: "Internal Server Error.",
@@ -121,7 +122,7 @@ export const getAllSubjectReports = async (req, res) => {
 //   });
 // };
 
-export const createSubjectReport = async (req, res) => {
+export const createSemesterReport = async (req, res) => {
   const token = req.cookies.accessToken;
   if (!token) {
     return res.status(401).json("YOU ARE NOT LOGGED IN!");
@@ -132,13 +133,12 @@ export const createSubjectReport = async (req, res) => {
       return res.status(403).json("INVALID TOKEN!");
     }
 
-    const { subjectId, schoolYearId, semesterId } = req.body;
+    const { schoolYearId, semesterId } = req.body;
 
     try {
       // Kiểm tra nếu báo cáo đã tồn tại
-      const existingReport = await prisma.reportSubject.findFirst({
+      const existingReport = await prisma.reportSemester.findFirst({
         where: {
-          subjectId: parseInt(subjectId),
           schoolYearId: parseInt(schoolYearId),
           semesterId: parseInt(semesterId),
         },
@@ -149,63 +149,62 @@ export const createSubjectReport = async (req, res) => {
       }
 
       // Tạo báo cáo mới trong bảng ReportSubject
-      const newReport = await prisma.reportSubject.create({
+      const newReport = await prisma.reportSemester.create({
         data: {
-          subjectId: parseInt(subjectId),
           schoolYearId: parseInt(schoolYearId),
           semesterId: parseInt(semesterId),
         },
       });
 
       // Lấy danh sách ScoreBoard thuộc SchoolYear và Semester
-      const scoreBoards = await prisma.scoreBoard.findMany({
-        where: {
-          schoolYearId: parseInt(schoolYearId),
-          semesterId: parseInt(semesterId),
-          subjectId: parseInt(subjectId),
-        },
-        include: {
-          dtScoreBoards: true, // Để lấy danh sách điểm số cho từng học sinh
-        },
-      });
+      //   const scoreBoards = await prisma.scoreBoard.findMany({
+      //     where: {
+      //       schoolYearId: parseInt(schoolYearId),
+      //       semesterId: parseInt(semesterId),
+      //       subjectId: parseInt(subjectId),
+      //     },
+      //     include: {
+      //       dtScoreBoards: true, // Để lấy danh sách điểm số cho từng học sinh
+      //     },
+      //   });
 
-      const reportData = scoreBoards.map((scoreBoard) => {
-        const scores = scoreBoard.dtScoreBoards;
+      //   const reportData = scoreBoards.map((scoreBoard) => {
+      //     const scores = scoreBoard.dtScoreBoards;
 
-        // Tổng số học sinh trong lớp
-        const totalStudents = scores.length;
+      //     // Tổng số học sinh trong lớp
+      //     const totalStudents = scores.length;
 
-        // Số lượng học sinh đạt (score >= 5.0)
-        const numberPassed = scores.filter(
-          (s) => s.score && s.score >= 5.0
-        ).length;
+      //     // Số lượng học sinh đạt (score >= 5.0)
+      //     const numberPassed = scores.filter(
+      //       (s) => s.score && s.score >= 5.0
+      //     ).length;
 
-        // Tỷ lệ đạt
-        const percentagePassed =
-          totalStudents > 0 ? (numberPassed / totalStudents) * 100 : 0;
+      //     // Tỷ lệ đạt
+      //     const percentagePassed =
+      //       totalStudents > 0 ? (numberPassed / totalStudents) * 100 : 0;
 
-        return {
-          classSchoolYearId: scoreBoard.classId, // Thay đổi nếu cần để lưu ID lớp
-          capacity: totalStudents,
-          numberPassed,
-          percentagePassed,
-        };
-      });
+      //     return {
+      //       classSchoolYearId: scoreBoard.classId, // Thay đổi nếu cần để lưu ID lớp
+      //       capacity: totalStudents,
+      //       numberPassed,
+      //       percentagePassed,
+      //     };
+      //   });
 
-      // Tạo dữ liệu DT_ReportSubject
-      await Promise.all(
-        reportData.map(async (data) => {
-          await prisma.dT_ReportSubject.create({
-            data: {
-              capacity: data.capacity,
-              numberPassed: data.numberPassed,
-              percentage: data.percentagePassed,
-              reportSubjectId: newReport.id,
-              classSchoolYearId: data.classSchoolYearId,
-            },
-          });
-        })
-      );
+      //   // Tạo dữ liệu DT_ReportSubject
+      //   await Promise.all(
+      //     reportData.map(async (data) => {
+      //       await prisma.dT_ReportSubject.create({
+      //         data: {
+      //           capacity: data.capacity,
+      //           numberPassed: data.numberPassed,
+      //           percentage: data.percentagePassed,
+      //           reportSubjectId: newReport.id,
+      //           classSchoolYearId: data.classSchoolYearId,
+      //         },
+      //       });
+      //     })
+      //   );
 
       return res
         .status(200)
@@ -219,7 +218,7 @@ export const createSubjectReport = async (req, res) => {
   });
 };
 
-export const deleteSubjectReport = (req, res) => {
+export const deleteSemesterReport = (req, res) => {
   const token = req.cookies.accessToken;
 
   if (!token) {
@@ -231,11 +230,11 @@ export const deleteSubjectReport = (req, res) => {
       return res.status(403).json("INVALID TOKEN!");
     }
 
-    const subjectReport = parseInt(req.params.id);
+    const semesterReport = parseInt(req.params.id);
 
-    await prisma.reportSubject.delete({
+    await prisma.reportSemester.delete({
       where: {
-        id: subjectReport,
+        id: semesterReport,
       },
     });
 
