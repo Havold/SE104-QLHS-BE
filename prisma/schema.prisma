@@ -41,6 +41,7 @@ model Student {
 
   studentClasses StudentClass[]
   DT_scoreBoards DT_ScoreBoard[]
+  DT_result      DT_Result[]
   results        Result[]
   attendance     Attendance[]
 }
@@ -123,6 +124,8 @@ model ScoreBoard {
   typeOfExam   TypeOfExam @relation(fields: [typeOfExamId], references: [id], onDelete: Cascade)
 
   dtScoreBoards DT_ScoreBoard[]
+
+  DT_ScoreBoard_Result DT_ScoreBoard_Result[]
 }
 
 model DT_ScoreBoard {
@@ -134,13 +137,11 @@ model DT_ScoreBoard {
   studentId Int
   student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
-  dtResults DT_Result[]
-
   @@id([scoreBoardId, studentId])
 }
 
 model Result {
-  id       Int    @id @default(autoincrement())
+  id       String @id
   avgSemI  Float? // Average score for semester I
   avgSemII Float? // Average score for semester II
 
@@ -154,19 +155,31 @@ model Result {
 }
 
 model DT_Result {
+  id       Int   @id @default(autoincrement())
   avgScore Float
 
-  resultId Int
+  resultId String
   result   Result @relation(fields: [resultId], references: [id], onDelete: Cascade)
 
   subjectId Int
   subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
 
-  scoreBoardId Int
-  studentId    Int
-  dtScoreBoard DT_ScoreBoard @relation(fields: [scoreBoardId, studentId], references: [scoreBoardId, studentId], onDelete: Cascade)
+  studentId Int
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
-  @@id([resultId, subjectId, scoreBoardId, studentId])
+  DT_ScoreBoard_Result DT_ScoreBoard_Result[]
+
+  @@unique([resultId, subjectId, studentId]) // Composite key
+}
+
+model DT_ScoreBoard_Result {
+  scoreBoardId Int
+  scoreBoard   ScoreBoard @relation(fields: [scoreBoardId], references: [id], onDelete: Cascade)
+
+  dtResultId Int
+  dtResult   DT_Result @relation(fields: [dtResultId], references: [id], onDelete: Cascade)
+
+  @@id([scoreBoardId, dtResultId]) // Composite key để đảm bảo quan hệ là duy nhất
 }
 
 model ReportSubject {

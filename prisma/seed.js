@@ -217,26 +217,26 @@ async function main() {
   // });
 
   // Seed Results
-  const result = await prisma.result.create({
-    data: {
-      avgSemI: 7.5,
-      avgSemII: 8.0,
-      schoolYearId: schoolYear2023?.id ?? 1,
-      studentId: student1?.id ?? 1,
-    },
-  });
+  // const result = await prisma.result.create({
+  //   data: {
+  //     avgSemI: 7.5,
+  //     avgSemII: 8.0,
+  //     schoolYearId: schoolYear2023?.id ?? 1,
+  //     studentId: student1?.id ?? 1,
+  //   },
+  // });
 
-  // Seed DT_Result
+  // // Seed DT_Result
 
-  const dtResult = await prisma.dT_Result.create({
-    data: {
-      avgScore: 8.0,
-      resultId: result.id,
-      subjectId: subjectMath?.id ?? 1,
-      scoreBoardId: 1, // Assuming a DT_ScoreBoard with ID exists
-      studentId: student1?.id ?? 1,
-    },
-  });
+  // const dtResult = await prisma.dT_Result.create({
+  //   data: {
+  //     avgScore: 8.0,
+  //     resultId: result.id,
+  //     subjectId: subjectMath?.id ?? 1,
+  //     scoreBoardId: 1, // Assuming a DT_ScoreBoard with ID exists
+  //     studentId: student1?.id ?? 1,
+  //   },
+  // });
 }
 
 main()
