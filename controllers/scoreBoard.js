@@ -112,6 +112,16 @@ export const addScoreBoard = (req, res) => {
     const semesterId = parseInt(req.body.semesterId);
     const typeOfExamId = parseInt(req.body.typeOfExamId);
 
+    if (
+      !subjectId ||
+      !schoolYearId ||
+      !classId ||
+      !semesterId ||
+      !typeOfExamId
+    ) {
+      return res.status(500).json("Please select/fill in all fields!");
+    }
+
     try {
       // Kiểm tra xem ScoreBoard đã tồn tại chưa
       const existingScoreBoard = await prisma.scoreBoard.findFirst({
@@ -177,6 +187,9 @@ export const addScoreBoard = (req, res) => {
           .status(400)
           .json("No students found for the selected class.");
       }
+
+      console.log(newScoreBoard);
+      console.log(students);
 
       // Tạo các bản ghi DT_ScoreBoard
       const dtScoreBoards = students.map((student) => ({
@@ -390,11 +403,12 @@ export const updateStudentsScore = async (req, res) => {
   }
 
   try {
-    // Verify token
+    // Xác thực token
     const userInfo = jwt.verify(token, process.env.JWT_SECRET);
 
     const scoreBoardId = parseInt(req.params.id);
-    // Validate request body
+
+    // Kiểm tra request body
     const { updatedScores } = req.body;
     if (!Array.isArray(updatedScores) || updatedScores.length === 0) {
       return res
@@ -402,46 +416,137 @@ export const updateStudentsScore = async (req, res) => {
         .json("Invalid updates format! Must be a non-empty array.");
     }
 
-    console.log(updatedScores);
+    const invalidScore = updatedScores.find(
+      (item) =>
+        typeof item.score !== "number" ||
+        item.score < 0 ||
+        item.score > 10 ||
+        !item.studentId
+    );
+    if (invalidScore) {
+      return res.status(400).json("Invalid data format in updatedScores.");
+    }
 
-    // Prepare update promises
-    const updatePromises = updatedScores.map((updatedScore) => {
-      let { studentId, score } = updatedScore;
-      // Validate fields
-      if (typeof score !== "number" || score < 0 || score > 10) {
-        throw new Error("Invalid update data! Ensure all fields are correct.");
+    // Lấy thông tin ScoreBoard hiện tại
+    const scoreBoard = await prisma.scoreBoard.findFirst({
+      where: { id: scoreBoardId },
+    });
+
+    if (!scoreBoard) {
+      return res.status(404).json("ScoreBoard not found!");
+    }
+
+    const { schoolYearId, semesterId, subjectId } = scoreBoard;
+
+    // Transaction để cập nhật điểm và tính toán lại
+    await prisma.$transaction(async (prisma) => {
+      // Cập nhật điểm trong bảng DT_ScoreBoard
+      const updatePromises = updatedScores.map(({ studentId, score }) =>
+        prisma.dT_ScoreBoard.update({
+          where: {
+            scoreBoardId_studentId: {
+              scoreBoardId,
+              studentId: parseInt(studentId),
+            },
+          },
+          data: { score },
+        })
+      );
+      await Promise.all(updatePromises);
+
+      // Xử lý liên kết với bảng trung gian DT_ScoreBoard_Result
+      for (const { studentId } of updatedScores) {
+        // Lấy hoặc tạo DT_Result cho học sinh
+        const dtResult = await prisma.dT_Result.upsert({
+          where: {
+            resultId_subjectId_studentId: {
+              resultId: `${studentId}_${schoolYearId}`,
+              subjectId,
+              studentId: parseInt(studentId),
+            },
+          },
+          update: {},
+          create: {
+            resultId: `${studentId}_${schoolYearId}`,
+            subjectId,
+            studentId: parseInt(studentId),
+            avgScore: 0, // Sẽ được cập nhật sau
+          },
+        });
+
+        // Liên kết ScoreBoard và DT_Result qua bảng trung gian
+        await prisma.dT_ScoreBoard_Result.upsert({
+          where: {
+            scoreBoardId_dtResultId: {
+              scoreBoardId,
+              dtResultId: dtResult.id,
+            },
+          },
+          create: {
+            scoreBoardId,
+            dtResultId: dtResult.id,
+          },
+          update: {},
+        });
       }
 
-      studentId = parseInt(studentId);
-      return prisma.dT_ScoreBoard.update({
-        where: {
-          scoreBoardId_studentId: {
-            scoreBoardId,
-            studentId,
+      // Cập nhật điểm trung bình môn (DT_Result.avgScore)
+      for (const { studentId } of updatedScores) {
+        const scores = await prisma.dT_ScoreBoard.findMany({
+          where: {
+            studentId: parseInt(studentId),
+            scoreBoard: {
+              subjectId,
+              semesterId,
+            },
           },
-        },
-        data: {
-          score,
-        },
-      });
+          select: { score: true },
+        });
+
+        const avgScore =
+          scores.reduce((sum, item) => sum + item.score, 0) / scores.length;
+
+        await prisma.dT_Result.update({
+          where: {
+            resultId_subjectId_studentId: {
+              resultId: `${studentId}_${schoolYearId}`,
+              subjectId,
+              studentId: parseInt(studentId),
+            },
+          },
+          data: { avgScore },
+        });
+      }
+
+      // Cập nhật điểm trung bình học kỳ (Result.avgSemI hoặc avgSemII)
+      const studentIds = updatedScores.map((item) => parseInt(item.studentId));
+      for (const studentId of studentIds) {
+        const avgScores = await prisma.dT_Result.findMany({
+          where: {
+            resultId: `${studentId}_${schoolYearId}`,
+          },
+          select: { avgScore: true },
+        });
+
+        const semesterAvg =
+          avgScores.reduce((sum, item) => sum + item.avgScore, 0) /
+          avgScores.length;
+
+        const updateField =
+          semesterId === 1
+            ? { avgSemI: semesterAvg }
+            : { avgSemII: semesterAvg };
+
+        await prisma.result.update({
+          where: { id: `${studentId}_${schoolYearId}` },
+          data: updateField,
+        });
+      }
     });
 
-    // Execute all updates
-    await Promise.all(updatePromises);
-
-    const scoreBoard = await prisma.scoreBoard.findFirst({
-      where: {
-        id: scoreBoardId,
-      },
-    });
-    // Tính toán và cập nhật điểm trung bình học kỳ cho từng học sinh
-    const schoolYearId = scoreBoard.schoolYearId;
-    const semesterId = scoreBoard.semesterId;
-
-    // Cập nhật điểm trung bình cho học sinh
-    await updateStudentAverageScores(schoolYearId, semesterId);
-
-    return res.status(200).json("All scores updated successfully!");
+    return res
+      .status(200)
+      .json("All scores updated and averages recalculated for the semester!");
   } catch (error) {
     if (error.name === "JsonWebTokenError") {
       return res.status(403).json("INVALID TOKEN!");
@@ -452,87 +557,5 @@ export const updateStudentsScore = async (req, res) => {
       message: "Internal server error.",
       error: error.message,
     });
-  }
-};
-
-const updateStudentAverageScores = async (schoolYearId, semesterId) => {
-  // Lấy danh sách tất cả học sinh
-  const students = await prisma.student.findMany();
-
-  for (const student of students) {
-    // Lấy điểm của từng học sinh trong kỳ học và năm học
-    const dtScores = await prisma.dT_ScoreBoard.findMany({
-      where: {
-        studentId: student.id,
-        scoreBoard: {
-          schoolYearId: schoolYearId,
-          semesterId: semesterId,
-        },
-      },
-      include: {
-        scoreBoard: {
-          include: {
-            subject: true, // Lấy thông tin môn học
-            typeOfExam: true, // Lấy thông tin hình thức kiểm tra
-          },
-        },
-      },
-    });
-
-    let totalScore = 0;
-    let totalSubjects = 0;
-
-    for (const score of dtScores) {
-      let weightedScore;
-
-      // Kiểm tra loại kiểm tra để áp dụng công thức tính điểm đúng
-      if (score.scoreBoard.typeOfExam.name === "45'") {
-        // Nếu là loại kiểm tra 45', tính điểm = score * 2
-        weightedScore = score.score * 2;
-      } else {
-        // Nếu không, chỉ sử dụng điểm như là
-        weightedScore = score.score;
-      }
-
-      // Tính điểm trung bình môn
-      totalScore += weightedScore;
-      totalSubjects++;
-    }
-
-    // Tính điểm trung bình cho học kỳ
-    const avgSemesterScore = totalSubjects > 0 ? totalScore / totalSubjects : 0;
-
-    // Cập nhật điểm trung bình vào bảng Result
-    // Tìm hoặc tạo bản ghi Result cho học sinh
-    const existingResult = await prisma.result.findFirst({
-      where: {
-        studentId: student.id,
-        schoolYearId,
-      },
-    });
-
-    if (existingResult) {
-      // Cập nhật bản ghi đã tồn tại
-      await prisma.result.update({
-        where: {
-          id: existingResult.id, // Sử dụng id của bản ghi đã tồn tại
-        },
-        data: {
-          avgSemI: semesterId === 1 ? avgSemesterScore : existingResult.avgSemI,
-          avgSemII:
-            semesterId === 2 ? avgSemesterScore : existingResult.avgSemII,
-        },
-      });
-    } else {
-      // Tạo mới bản ghi nếu chưa tồn tại
-      await prisma.result.create({
-        data: {
-          studentId: student.id,
-          schoolYearId: schoolYearId,
-          avgSemI: semesterId === 1 ? avgSemesterScore : null,
-          avgSemII: semesterId === 2 ? avgSemesterScore : null,
-        },
-      });
-    }
   }
 };
