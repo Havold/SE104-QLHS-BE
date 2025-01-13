@@ -56,6 +56,61 @@ export const getStudentsFromClass = async (req, res) => {
   }
 };
 
+// export const addStudentsToClass = async (req, res) => {
+//   const token = req.cookies.accessToken;
+//   if (!token) {
+//     return res.status(401).json("YOU ARE NOT LOGIN!");
+//   }
+
+//   jwt.verify(token, process.env.JWT_SECRET, async (err, userInfo) => {
+//     if (err) {
+//       return res.status(403).json("INVALID TOKEN!");
+//     }
+
+//     let { classSchoolYearId, studentIds } = req.body;
+//     classSchoolYearId = parseInt(classSchoolYearId);
+
+//     try {
+//       // Kiểm tra lớp học có tồn tại không
+//       const classExists = await prisma.classSchoolYear.findUnique({
+//         where: {
+//           id: classSchoolYearId,
+//         },
+//       });
+
+//       if (!classExists) {
+//         return res.status(404).json("Class not found!");
+//       }
+
+//       // Thêm học sinh vào lớp học sử dụng connect
+//       const studentClassData = studentIds.map((studentId) => ({
+//         studentId: studentId, // Chỉ định studentId trực tiếp
+//         classSchoolYearId: classSchoolYearId, // Chỉ định classSchoolYearId trực tiếp
+//       }));
+
+//       // Sử dụng createMany để thêm nhiều bản ghi vào bảng StudentClass
+//       const addedStudents = await prisma.studentClass.createMany({
+//         data: studentClassData,
+//         skipDuplicates: true, // Bỏ qua nếu học sinh đã được thêm
+//       });
+
+//       // Cập nhật capacity
+//       const currentCapacity = classExists.capacity + studentIds.length;
+//       await prisma.classSchoolYear.update({
+//         where: { id: classSchoolYearId },
+//         data: { capacity: currentCapacity },
+//       });
+
+//       return res
+//         .status(200)
+//         .json("Students have been successfully added to the class!");
+//     } catch (error) {
+//       console.error(error);
+//       return res.status(500).json("Something went wrong!");
+//     }
+//   });
+// };
+
 export const addStudentsToClass = async (req, res) => {
   const token = req.cookies.accessToken;
   if (!token) {
@@ -71,18 +126,19 @@ export const addStudentsToClass = async (req, res) => {
     classSchoolYearId = parseInt(classSchoolYearId);
 
     try {
-      // Kiểm tra lớp học có tồn tại không
+      // 1. Kiểm tra lớp học có tồn tại không
       const classExists = await prisma.classSchoolYear.findUnique({
-        where: {
-          id: classSchoolYearId,
-        },
+        where: { id: classSchoolYearId },
+        include: { schoolYear: true }, // Lấy thông tin năm học
       });
 
       if (!classExists) {
         return res.status(404).json("Class not found!");
       }
 
-      // Thêm học sinh vào lớp học sử dụng connect
+      const schoolYearId = classExists.schoolYearId;
+
+      // 2. Thêm học sinh vào lớp học sử dụng connect
       const studentClassData = studentIds.map((studentId) => ({
         studentId: studentId, // Chỉ định studentId trực tiếp
         classSchoolYearId: classSchoolYearId, // Chỉ định classSchoolYearId trực tiếp
@@ -94,7 +150,22 @@ export const addStudentsToClass = async (req, res) => {
         skipDuplicates: true, // Bỏ qua nếu học sinh đã được thêm
       });
 
-      // Cập nhật capacity
+      // 3. Tạo `Result` cho mỗi học sinh
+      const resultData = studentIds.map((studentId) => ({
+        id: `${studentId}_${schoolYearId}`, // Tạo id = studentId + schoolYearId
+        studentId: studentId,
+        schoolYearId: schoolYearId,
+        avgSemI: null, // Giá trị mặc định ban đầu
+        avgSemII: null, // Giá trị mặc định ban đầu
+      }));
+
+      // Thêm vào bảng Result
+      await prisma.result.createMany({
+        data: resultData,
+        skipDuplicates: true, // Tránh thêm trùng lặp nếu đã tồn tại
+      });
+
+      // 4. Cập nhật capacity của lớp
       const currentCapacity = classExists.capacity + studentIds.length;
       await prisma.classSchoolYear.update({
         where: { id: classSchoolYearId },
@@ -103,7 +174,7 @@ export const addStudentsToClass = async (req, res) => {
 
       return res
         .status(200)
-        .json("Students have been successfully added to the class!");
+        .json("Students and results have been successfully added!");
     } catch (error) {
       console.error(error);
       return res.status(500).json("Something went wrong!");
