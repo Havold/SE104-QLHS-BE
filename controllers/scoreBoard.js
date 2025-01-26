@@ -459,16 +459,18 @@ export const updateStudentsScore = async (req, res) => {
         // Lấy hoặc tạo DT_Result cho học sinh
         const dtResult = await prisma.dT_Result.upsert({
           where: {
-            resultId_subjectId_studentId: {
+            resultId_subjectId_studentId_semesterId: {
               resultId: `${studentId}_${schoolYearId}`,
               subjectId,
               studentId: parseInt(studentId),
+              semesterId: parseInt(semesterId),
             },
           },
           update: {},
           create: {
             resultId: `${studentId}_${schoolYearId}`,
             subjectId,
+            semesterId: parseInt(semesterId),
             studentId: parseInt(studentId),
             avgScore: 0, // Sẽ được cập nhật sau
           },
@@ -508,10 +510,11 @@ export const updateStudentsScore = async (req, res) => {
 
         await prisma.dT_Result.update({
           where: {
-            resultId_subjectId_studentId: {
+            resultId_subjectId_studentId_semesterId: {
               resultId: `${studentId}_${schoolYearId}`,
               subjectId,
               studentId: parseInt(studentId),
+              semesterId: parseInt(semesterId),
             },
           },
           data: { avgScore },
@@ -524,6 +527,7 @@ export const updateStudentsScore = async (req, res) => {
         const avgScores = await prisma.dT_Result.findMany({
           where: {
             resultId: `${studentId}_${schoolYearId}`,
+            semesterId: parseInt(semesterId),
           },
           select: { avgScore: true },
         });
