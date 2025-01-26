@@ -122,13 +122,22 @@ CREATE TABLE "Result" (
 
 -- CreateTable
 CREATE TABLE "DT_Result" (
+    "id" SERIAL NOT NULL,
     "avgScore" DOUBLE PRECISION NOT NULL,
     "resultId" TEXT NOT NULL,
     "subjectId" INTEGER NOT NULL,
-    "scoreBoardId" INTEGER NOT NULL,
     "studentId" INTEGER NOT NULL,
+    "semesterId" INTEGER NOT NULL,
 
-    CONSTRAINT "DT_Result_pkey" PRIMARY KEY ("resultId","subjectId","scoreBoardId","studentId")
+    CONSTRAINT "DT_Result_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "DT_ScoreBoard_Result" (
+    "scoreBoardId" INTEGER NOT NULL,
+    "dtResultId" INTEGER NOT NULL,
+
+    CONSTRAINT "DT_ScoreBoard_Result_pkey" PRIMARY KEY ("scoreBoardId","dtResultId")
 );
 
 -- CreateTable
@@ -292,6 +301,9 @@ CREATE UNIQUE INDEX "Grade_level_key" ON "Grade"("level");
 CREATE UNIQUE INDEX "Subject_name_key" ON "Subject"("name");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "DT_Result_resultId_subjectId_studentId_semesterId_key" ON "DT_Result"("resultId", "subjectId", "studentId", "semesterId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Role_name_key" ON "Role"("name");
 
 -- CreateIndex
@@ -355,7 +367,16 @@ ALTER TABLE "DT_Result" ADD CONSTRAINT "DT_Result_resultId_fkey" FOREIGN KEY ("r
 ALTER TABLE "DT_Result" ADD CONSTRAINT "DT_Result_subjectId_fkey" FOREIGN KEY ("subjectId") REFERENCES "Subject"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "DT_Result" ADD CONSTRAINT "DT_Result_scoreBoardId_studentId_fkey" FOREIGN KEY ("scoreBoardId", "studentId") REFERENCES "DT_ScoreBoard"("scoreBoardId", "studentId") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "DT_Result" ADD CONSTRAINT "DT_Result_studentId_fkey" FOREIGN KEY ("studentId") REFERENCES "Student"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "DT_Result" ADD CONSTRAINT "DT_Result_semesterId_fkey" FOREIGN KEY ("semesterId") REFERENCES "Semester"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "DT_ScoreBoard_Result" ADD CONSTRAINT "DT_ScoreBoard_Result_scoreBoardId_fkey" FOREIGN KEY ("scoreBoardId") REFERENCES "ScoreBoard"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "DT_ScoreBoard_Result" ADD CONSTRAINT "DT_ScoreBoard_Result_dtResultId_fkey" FOREIGN KEY ("dtResultId") REFERENCES "DT_Result"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "ReportSubject" ADD CONSTRAINT "ReportSubject_schoolYearId_fkey" FOREIGN KEY ("schoolYearId") REFERENCES "SchoolYear"("id") ON DELETE CASCADE ON UPDATE CASCADE;

@@ -96,6 +96,7 @@ model Semester {
   scoreBoards     ScoreBoard[]
   reportsSubject  ReportSubject[]
   reportsSemester ReportSemester[]
+  dtResults       DT_Result[]
 }
 
 model TypeOfExam {
@@ -167,9 +168,12 @@ model DT_Result {
   studentId Int
   student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
+  semesterId Int
+  semester   Semester @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+
   DT_ScoreBoard_Result DT_ScoreBoard_Result[]
 
-  @@unique([resultId, subjectId, studentId]) // Composite key
+  @@unique([resultId, subjectId, studentId, semesterId]) // Composite key
 }
 
 model DT_ScoreBoard_Result {
@@ -247,7 +251,7 @@ model ClassSchoolYear {
   classId Int?
   class   Class? @relation(fields: [classId], references: [id], onDelete: Cascade)
 
-  studentsClasses StudentClass[]
+  studentsClass StudentClass[]
 
   DT_reportsSubject  DT_ReportSubject[]
   DT_reportsSemester DT_ReportSemester[]
