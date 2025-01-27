@@ -156,55 +156,69 @@ export const createSemesterReport = async (req, res) => {
         },
       });
 
-      // Lấy danh sách ScoreBoard thuộc SchoolYear và Semester
-      //   const scoreBoards = await prisma.scoreBoard.findMany({
-      //     where: {
-      //       schoolYearId: parseInt(schoolYearId),
-      //       semesterId: parseInt(semesterId),
-      //       subjectId: parseInt(subjectId),
-      //     },
-      //     include: {
-      //       dtScoreBoards: true, // Để lấy danh sách điểm số cho từng học sinh
-      //     },
-      //   });
+      const classesSchoolYear = await prisma.classSchoolYear.findMany({
+        where: {
+          schoolYearId: parseInt(schoolYearId),
+        },
+        include: {
+          studentsClass: true,
+        },
+      });
 
-      //   const reportData = scoreBoards.map((scoreBoard) => {
-      //     const scores = scoreBoard.dtScoreBoards;
+      console.log(classesSchoolYear);
 
-      //     // Tổng số học sinh trong lớp
-      //     const totalStudents = scores.length;
+      // Duyệt qua từng lớp học để tạo dữ liệu báo cáo
+      const reportData = await Promise.all(
+        classesSchoolYear.map(async (cs) => {
+          const studentIds = cs.studentsClass.map((sc) => sc.studentId);
 
-      //     // Số lượng học sinh đạt (score >= 5.0)
-      //     const numberPassed = scores.filter(
-      //       (s) => s.score && s.score >= 5.0
-      //     ).length;
+          // Tính điểm trung bình cho từng học sinh trong lớp
+          const avgScores = await prisma.result.findMany({
+            where: {
+              studentId: {
+                in: studentIds,
+              },
+              schoolYearId: schoolYearId,
+            },
+          });
 
-      //     // Tỷ lệ đạt
-      //     const percentagePassed =
-      //       totalStudents > 0 ? (numberPassed / totalStudents) * 100 : 0;
+          // Tính số học sinh đạt
+          const numberPassed = avgScores.reduce((total, avgScoreObj) => {
+            if (
+              (semesterId == 1 && avgScoreObj.avgSemI >= 5) ||
+              (semesterId == 2 && avgScoreObj.avgSemII >= 5)
+            ) {
+              total++;
+            }
+            return total;
+          }, 0);
 
-      //     return {
-      //       classSchoolYearId: scoreBoard.classId, // Thay đổi nếu cần để lưu ID lớp
-      //       capacity: totalStudents,
-      //       numberPassed,
-      //       percentagePassed,
-      //     };
-      //   });
+          // Tính phần trăm học sinh đạt
+          return {
+            classSchoolYearId: cs.id,
+            capacity: cs.capacity,
+            numberPassed: numberPassed,
+            percentagePassed:
+              cs.capacity > 0
+                ? parseFloat(((numberPassed / cs.capacity) * 100).toFixed(2))
+                : 0,
+          };
+        })
+      );
 
-      //   // Tạo dữ liệu DT_ReportSubject
-      //   await Promise.all(
-      //     reportData.map(async (data) => {
-      //       await prisma.dT_ReportSubject.create({
-      //         data: {
-      //           capacity: data.capacity,
-      //           numberPassed: data.numberPassed,
-      //           percentage: data.percentagePassed,
-      //           reportSubjectId: newReport.id,
-      //           classSchoolYearId: data.classSchoolYearId,
-      //         },
-      //       });
-      //     })
-      //   );
+      await Promise.all(
+        reportData.map(async (data) => {
+          await prisma.dT_ReportSemester.create({
+            data: {
+              capacity: data.capacity,
+              numberPassed: data.numberPassed,
+              percentage: data.percentagePassed,
+              reportSemesterId: newReport.id,
+              classSchoolYearId: data.classSchoolYearId,
+            },
+          });
+        })
+      );
 
       return res
         .status(200)
