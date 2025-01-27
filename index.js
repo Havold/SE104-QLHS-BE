@@ -15,6 +15,7 @@ import TypesOfExamRoutes from "./routes/typesOfExam.js";
 import SubjectReportsRoutes from "./routes/subjectReports.js";
 import DetailSubjectReportRoutes from "./routes/detailSubjectReport.js";
 import SemesterReportsRoutes from "./routes/semesterReports.js";
+import DetailSemesterReportsRoutes from "./routes/detailSemesterReport.js";
 import RulesRoutes from "./routes/rules.js";
 import AuthRoutes from "./routes/auth.js";
 import cors from "cors";
@@ -73,6 +74,7 @@ app.use("/api/types-of-exam", TypesOfExamRoutes);
 app.use("/api/subject-reports", SubjectReportsRoutes);
 app.use("/api/detail-subject-report", DetailSubjectReportRoutes);
 app.use("/api/semester-reports", SemesterReportsRoutes);
+app.use("/api/detail-semester-report", DetailSemesterReportsRoutes);
 app.use("/api/rules", RulesRoutes);
 
 const port = process.env.PORT || 3030;
