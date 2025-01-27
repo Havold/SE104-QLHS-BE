@@ -502,11 +502,28 @@ export const updateStudentsScore = async (req, res) => {
               semesterId,
             },
           },
-          select: { score: true },
+          select: {
+            score: true,
+            scoreBoard: {
+              include: {
+                typeOfExam: true,
+              },
+            },
+          },
         });
 
+        let denominator = scores.length;
+
         const avgScore =
-          scores.reduce((sum, item) => sum + item.score, 0) / scores.length;
+          scores.reduce((sum, item) => {
+            if (item.scoreBoard.typeOfExam.name == "45") {
+              sum += item.score * 2;
+              denominator++;
+            } else {
+              sum += item.score;
+            }
+            return sum;
+          }, 0) / denominator;
 
         await prisma.dT_Result.update({
           where: {

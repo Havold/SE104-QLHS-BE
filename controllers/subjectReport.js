@@ -104,8 +104,6 @@ export const createSubjectReport = async (req, res) => {
         },
       });
 
-      console.log("Hello", newReport.id);
-
       const classesSchoolYear = await prisma.classSchoolYear.findMany({
         where: {
           schoolYearId: parseInt(schoolYearId),

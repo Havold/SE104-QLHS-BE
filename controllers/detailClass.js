@@ -48,7 +48,7 @@ export const getAllDetailClasses = async (req, res) => {
       take: pItems,
       include: {
         schoolYear: true,
-        studentsClasses: {
+        studentsClass: {
           include: {
             student: true,
           },
@@ -70,7 +70,7 @@ export const getAllDetailClasses = async (req, res) => {
       schoolYearId: cs.schoolYearId,
       schoolYearValue: cs.schoolYear.value,
       capacity: cs.capacity,
-      students: cs.studentsClasses.map((sc) => ({
+      students: cs.studentsClass.map((sc) => ({
         id: sc.student.id,
         username: sc.student.username,
         email: sc.student.email,
@@ -129,7 +129,7 @@ export const getDetailClass = async (req, res) => {
       },
       include: {
         schoolYear: true,
-        studentsClasses: {
+        studentsClass: {
           include: {
             student: true,
           },
@@ -151,7 +151,7 @@ export const getDetailClass = async (req, res) => {
       schoolYearId: cs.schoolYearId,
       schoolYearValue: cs.schoolYear.value,
       capacity: cs.capacity,
-      students: cs.studentsClasses.map((sc) => ({
+      students: cs.studentsClass.map((sc) => ({
         id: sc.student.id,
         username: sc.student.username,
         email: sc.student.email,
