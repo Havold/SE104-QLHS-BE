@@ -9,11 +9,19 @@ export const getAllSemesterReports = async (req, res) => {
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
       switch (key) {
-        case "search":
-          query.name = {
-            contains: value,
-            mode: "insensitive",
-          };
+        case "schoolYearId":
+          if (value != "") {
+            query.schoolYear = {
+              id: parseInt(value),
+            };
+          }
+          break;
+        case "semesterId":
+          if (value != "") {
+            query.semester = {
+              id: parseInt(value),
+            };
+          }
           break;
         default:
           break;
@@ -68,59 +76,6 @@ export const getAllSemesterReports = async (req, res) => {
     });
   }
 };
-
-// export const createSubjectReport = (req, res) => {
-//   const token = req.cookies.accessToken;
-//   if (!token) {
-//     return res.status(401).json("YOU ARE NOT LOGIN!");
-//   }
-
-//   jwt.verify(token, process.env.JWT_SECRET, async (err, userInfo) => {
-//     if (err) {
-//       res.status(403).json("INVALID TOKEN!");
-//     }
-
-//     const subjectId = parseInt(req.body.subjectId);
-//     const schoolYearId = parseInt(req.body.schoolYearId);
-//     const semesterId = parseInt(req.body.semesterId);
-
-//     const existingReport = await prisma.reportSubject.findFirst({
-//       where: {
-//         subjectId,
-//         schoolYearId,
-//         semesterId,
-//       },
-//     });
-
-//     if (existingReport) {
-//       return res.status(403).json("This report has been created!!");
-//     }
-
-//     await prisma.reportSubject.create({
-//       data: {
-//         subject: {
-//           connect: {
-//             id: subjectId,
-//           },
-//         },
-
-//         schoolYear: {
-//           connect: {
-//             id: schoolYearId,
-//           },
-//         },
-
-//         semester: {
-//           connect: {
-//             id: semesterId,
-//           },
-//         },
-//       },
-//     });
-
-//     return res.status(200).json("New report has been created!");
-//   });
-// };
 
 export const createSemesterReport = async (req, res) => {
   const token = req.cookies.accessToken;
