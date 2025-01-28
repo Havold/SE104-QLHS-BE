@@ -9,11 +9,26 @@ export const getAllSubjectReports = async (req, res) => {
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
       switch (key) {
-        case "search":
-          query.name = {
-            contains: value,
-            mode: "insensitive",
-          };
+        case "schoolYearId":
+          if (value != "") {
+            query.schoolYear = {
+              id: parseInt(value),
+            };
+          }
+          break;
+        case "subjectId":
+          if (value != "") {
+            query.subject = {
+              id: parseInt(value),
+            };
+          }
+          break;
+        case "semesterId":
+          if (value != "") {
+            query.semester = {
+              id: parseInt(value),
+            };
+          }
           break;
         default:
           break;
