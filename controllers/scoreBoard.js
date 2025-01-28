@@ -9,10 +9,29 @@ export const getAllScoreBoard = async (req, res) => {
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
       switch (key) {
-        case "search":
-          query.name = {
-            contains: value,
-            mode: "insensitive",
+        case "schoolYearId":
+          query.schoolYear = {
+            id: parseInt(value),
+          };
+          break;
+        case "subjectId":
+          query.subject = {
+            id: parseInt(value),
+          };
+          break;
+        case "classId":
+          query.class = {
+            id: parseInt(value),
+          };
+          break;
+        case "semesterId":
+          query.semester = {
+            id: parseInt(value),
+          };
+          break;
+        case "typeOfExamId":
+          query.typeOfExam = {
+            id: parseInt(value),
           };
           break;
         default:

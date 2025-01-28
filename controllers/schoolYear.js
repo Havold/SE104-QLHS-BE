@@ -11,15 +11,15 @@ export const getAllSchoolYears = async (req, res) => {
     for (const [key, value] of Object.entries(queryParams)) {
       switch (key) {
         case "search":
-          try {
-            if (value) {
-              const searchValue = parseInt(value);
+          if (value) {
+            const searchValue = parseInt(value);
+            if (!isNaN(searchValue)) {
               query.value = {
                 equals: searchValue,
               };
+            } else {
+              return res.status(500).json("Input search should be a number!");
             }
-          } catch (error) {
-            return res.status(500).json("Input search should be a number!");
           }
 
           break;
