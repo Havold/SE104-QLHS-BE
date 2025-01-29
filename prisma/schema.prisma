@@ -51,7 +51,7 @@ model SchoolYear {
   value     Int      @unique
   createdAt DateTime @default(now())
 
-  ClassSchoolYear ClassSchoolYear[]
+  classSchoolYear ClassSchoolYear[]
   scoreBoards     ScoreBoard[]
   results         Result[]
   reportsSubject  ReportSubject[]
