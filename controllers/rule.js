@@ -173,15 +173,65 @@ export const updateRule = (req, res) => {
       res.status(403).json("INVALID TOKEN");
     }
 
-    await prisma.parameter.update({
-      where: {
-        id: parseInt(req.params.id),
-      },
-      data: {
-        value: parseFloat(req.body.value),
-      },
-    });
+    try {
+      const ruleId = parseInt(req.params.id);
+      const value = parseInt(req.body.value);
 
-    return res.status(200).json("Updated rule successfully!");
+      console.log(ruleId);
+
+      // Get rule
+      const rule = await prisma.parameter.findUnique({
+        where: {
+          id: ruleId,
+        },
+      });
+
+      if (!rule) {
+        return res.status(404).json("Rule not found!");
+      }
+
+      // Nếu rule có chứa "min" hoặc "max" trong name, kiểm tra giá trị
+      if (rule.name.includes("Min") || rule.name.includes("Max")) {
+        const ruleName = rule.name.split(" ")[1];
+        const oppositeRule = await prisma.parameter.findFirst({
+          where: {
+            name: {
+              contains: ruleName,
+            },
+            id: {
+              not: ruleId,
+            },
+          },
+        });
+
+        console.log(oppositeRule);
+
+        if (rule.name.includes("Min") && oppositeRule.value < value) {
+          return res
+            .status(400)
+            .json(`Min ${ruleName} cannot be greater than Max ${ruleName}!`);
+        }
+
+        if (rule.name.includes("Max") && oppositeRule.value > value) {
+          return res
+            .status(400)
+            .json(`Max ${ruleName} cannot be less than Min ${ruleName}!`);
+        }
+      }
+
+      await prisma.parameter.update({
+        where: {
+          id: ruleId,
+        },
+        data: {
+          value: value,
+        },
+      });
+
+      return res.status(200).json("Updated rule successfully!");
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json(error);
+    }
   });
 };
