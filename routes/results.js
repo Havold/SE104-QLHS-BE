@@ -1,7 +1,8 @@
 import express from "express";
+import { getAllResults } from "../controllers/result.js";
 
 const router = express.Router();
 
-router.get("/");
+router.get("/", getAllResults);
 
 export default router;
