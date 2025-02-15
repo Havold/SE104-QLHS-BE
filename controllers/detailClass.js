@@ -19,6 +19,14 @@ export const getAllDetailClasses = async (req, res) => {
             id: parseInt(value), // Chuyển sang số nguyên
           };
           break;
+        case "studentId":
+          console.log("Xử lý rồi");
+          query.studentsClass = {
+            some: {
+              studentId: parseInt(value),
+            },
+          };
+          break;
         case "search":
           if (!query.class) query.class = {};
           query.class.name = {
