@@ -57,7 +57,6 @@ export const getAllStudents = async (req, res) => {
                 studentClasses: {
                   some: {
                     classSchoolYear: {
-                      classId: parseInt(queryParams.classId),
                       schoolYearId: parseInt(queryParams.schoolYearId),
                     },
                   },
