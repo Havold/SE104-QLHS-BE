@@ -270,7 +270,7 @@ model StudentClass {
   classSchoolYear   ClassSchoolYear @relation(fields: [classSchoolYearId], references: [id], onDelete: Cascade)
 }
 
-model Parameter {
+model Rule {
   id    Int    @id @default(autoincrement())
   name  String
   value Float

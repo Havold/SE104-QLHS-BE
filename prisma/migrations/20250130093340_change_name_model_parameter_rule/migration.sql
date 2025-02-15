@@ -201,12 +201,12 @@ CREATE TABLE "StudentClass" (
 );
 
 -- CreateTable
-CREATE TABLE "Parameter" (
+CREATE TABLE "Rule" (
     "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
     "value" DOUBLE PRECISION NOT NULL,
 
-    CONSTRAINT "Parameter_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "Rule_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
