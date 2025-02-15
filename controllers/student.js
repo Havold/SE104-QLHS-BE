@@ -237,12 +237,12 @@ export const addStudent = async (req, res) => {
     }
 
     // Kiểm tra tuổi
-    const minAge = await prisma.parameter.findFirst({
+    const minAge = await prisma.rule.findFirst({
       where: {
         name: "Min Age",
       },
     });
-    const maxAge = await prisma.parameter.findFirst({
+    const maxAge = await prisma.rule.findFirst({
       where: {
         name: "Max Age",
       },

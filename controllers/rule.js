@@ -23,18 +23,18 @@ export const getAllRules = async (req, res) => {
   }
 
   try {
-    const count = await prisma.parameter.count({ where: query });
+    const count = await prisma.rule.count({ where: query });
 
     // Nếu type là "all", lấy toàn bộ dữ liệu mà không áp dụng phân trang
-    let parameters;
+    let rules;
     if (type === "all") {
-      parameters = await prisma.parameter.findMany({
+      rules = await prisma.rule.findMany({
         where: query,
         orderBy: {
           ["name"]: "asc", // Sắp xếp theo trường và thứ tự
         },
       });
-      res.status(200).json({ parameters, totalCount: count, currentPage: 1 });
+      res.status(200).json({ rules, totalCount: count, currentPage: 1 });
       return;
     }
 
@@ -46,7 +46,7 @@ export const getAllRules = async (req, res) => {
       p = 1;
     }
 
-    parameters = await prisma.parameter.findMany({
+    rules = await prisma.rule.findMany({
       where: query,
       select: {
         id: true,
@@ -56,7 +56,7 @@ export const getAllRules = async (req, res) => {
       take: pItems,
       skip: (p - 1) * pItems,
     });
-    res.status(200).json({ parameters, totalCount: count, currentPage: p });
+    res.status(200).json({ rules, totalCount: count, currentPage: p });
   } catch (error) {
     console.log("Error fetching Classes data: ", error.message);
     res.status(500).json({
@@ -68,24 +68,16 @@ export const getAllRules = async (req, res) => {
 };
 
 // GET A RULES
-export const getClass = async (req, res) => {
-  const classId = parseInt(req.params.id);
+export const geRule = async (req, res) => {
+  const ruleId = parseInt(req.params.id);
   try {
-    const _class = await prisma.class.findFirst({
+    const rule = await prisma.rule.findFirst({
       where: {
-        id: classId,
-      },
-      select: {
-        name: true,
-        grade: {
-          select: {
-            level: true,
-          },
-        },
+        id: ruleId,
       },
     });
 
-    res.status(200).json(_class);
+    res.status(200).json(rule);
   } catch (error) {
     console.log(error);
     res.status(500).json(error);
@@ -105,7 +97,7 @@ export const addRule = (req, res) => {
     }
     let inputName = req.body.name;
     let inputValue = req.body.value;
-    const existingRule = await prisma.parameter.findFirst({
+    const existingRule = await prisma.rule.findFirst({
       where: {
         name: inputName,
       },
@@ -115,7 +107,7 @@ export const addRule = (req, res) => {
       return res.status(403).json("This rule already exists!");
     }
 
-    await prisma.parameter.create({
+    await prisma.rule.create({
       data: {
         name: inputName,
         value: inputValue,
@@ -180,7 +172,7 @@ export const updateRule = (req, res) => {
       console.log(ruleId);
 
       // Get rule
-      const rule = await prisma.parameter.findUnique({
+      const rule = await prisma.rule.findUnique({
         where: {
           id: ruleId,
         },
@@ -193,7 +185,7 @@ export const updateRule = (req, res) => {
       // Nếu rule có chứa "min" hoặc "max" trong name, kiểm tra giá trị
       if (rule.name.includes("Min") || rule.name.includes("Max")) {
         const ruleName = rule.name.split(" ")[1];
-        const oppositeRule = await prisma.parameter.findFirst({
+        const oppositeRule = await prisma.rule.findFirst({
           where: {
             name: {
               contains: ruleName,
@@ -204,22 +196,22 @@ export const updateRule = (req, res) => {
           },
         });
 
-        console.log(oppositeRule);
+        if (oppositeRule) {
+          if (rule.name.includes("Min") && oppositeRule.value < value) {
+            return res
+              .status(400)
+              .json(`Min ${ruleName} cannot be greater than Max ${ruleName}!`);
+          }
 
-        if (rule.name.includes("Min") && oppositeRule.value < value) {
-          return res
-            .status(400)
-            .json(`Min ${ruleName} cannot be greater than Max ${ruleName}!`);
-        }
-
-        if (rule.name.includes("Max") && oppositeRule.value > value) {
-          return res
-            .status(400)
-            .json(`Max ${ruleName} cannot be less than Min ${ruleName}!`);
+          if (rule.name.includes("Max") && oppositeRule.value > value) {
+            return res
+              .status(400)
+              .json(`Max ${ruleName} cannot be less than Min ${ruleName}!`);
+          }
         }
       }
 
-      await prisma.parameter.update({
+      await prisma.rule.update({
         where: {
           id: ruleId,
         },
