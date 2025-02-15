@@ -49,10 +49,48 @@ export const getDetailScoreBoard = async (req, res) => {
       take: pItems,
       skip: (p - 1) * pItems,
     });
+
+    const studentIds = dT_ScoreBoards.map((dT_ScoreBoard) => {
+      return dT_ScoreBoard.studentId;
+    });
+
     res.status(200).json({ dT_ScoreBoards, totalCount: count, currentPage: p });
   } catch (error) {
     console.log(error);
     res.status(500).json(error);
+  }
+};
+
+export const addStudentsToDTScoreBoardFunction = async (
+  scoreBoardId,
+  studentIds
+) => {
+  try {
+    // Kiểm tra bảng điểm có tồn tại không
+    const scoreBoardExists = await prisma.scoreBoard.findUnique({
+      where: {
+        id: scoreBoardId,
+      },
+    });
+
+    if (!scoreBoardExists) {
+      return Promise.resolve();
+    }
+
+    // Thêm học sinh vào lớp học sử dụng connect
+    const studentClassData = studentIds.map((studentId) => ({
+      studentId: studentId, // Chỉ định studentId trực tiếp
+      scoreBoardId: scoreBoardId, // Chỉ định scoreBoardId trực tiếp
+    }));
+
+    // Sử dụng createMany để thêm nhiều bản ghi vào bảng
+    const addedStudents = await prisma.dT_ScoreBoard.createMany({
+      data: studentClassData,
+      skipDuplicates: true, // Bỏ qua nếu học sinh đã được thêm
+    });
+    return Promise.resolve();
+  } catch (error) {
+    return Promise.resolve();
   }
 };
 
