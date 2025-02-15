@@ -35,9 +35,11 @@ export const getAllResults = (req, res) => {
           schoolYear: true,
         },
       });
+
       const enrichedResults = await Promise.all(
         results.map(async (result) => {
-          const cs = await prisma.classSchoolYear.findFirst({
+          let cs;
+          cs = await prisma.classSchoolYear.findFirst({
             where: {
               schoolYearId: result.schoolYearId,
               studentsClass: {
@@ -50,7 +52,7 @@ export const getAllResults = (req, res) => {
               class: true,
             },
           });
-          return { ...result, class: cs.class };
+          return { ...result, class: cs ? cs.class : null };
         })
       );
       return res.status(200).json(enrichedResults);

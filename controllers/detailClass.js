@@ -240,20 +240,24 @@ export const deleteDetailClass = (req, res) => {
     const classSchoolYearId = parseInt(req.params.id);
 
     const classSchoolYear = await prisma.classSchoolYear.findFirst({
-      select: {
-        class: {
-          select: {
-            name: true,
-          },
-        },
-        schoolYear: {
-          select: {
-            value: true,
-          },
-        },
+      include: {
+        class: true,
+        schoolYear: true,
+        studentsClass: true,
       },
       where: {
         id: classSchoolYearId,
+      },
+    });
+
+    console.log(classSchoolYear);
+
+    await prisma.result.deleteMany({
+      where: {
+        schoolYearId: classSchoolYear.schoolYearId,
+        studentId: {
+          in: classSchoolYear.studentsClass.map((student) => student.studentId),
+        },
       },
     });
 
