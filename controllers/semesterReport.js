@@ -90,6 +90,10 @@ export const createSemesterReport = async (req, res) => {
 
     const { schoolYearId, semesterId } = req.body;
 
+    if (!schoolYearId || !semesterId) {
+      return res.status(500).json("Please select/fill in all fields!");
+    }
+
     try {
       // Kiểm tra nếu báo cáo đã tồn tại
       const existingReport = await prisma.reportSemester.findFirst({

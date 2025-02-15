@@ -189,6 +189,10 @@ export const addDetailClass = (req, res) => {
     const classId = parseInt(req.body.classId);
     const schoolYearId = parseInt(req.body.schoolYearId);
 
+    if (!classId || !schoolYearId) {
+      return res.status(500).json("Please select/fill in all fields!");
+    }
+
     const existingClass = await prisma.classSchoolYear.findFirst({
       where: {
         classId: classId,
