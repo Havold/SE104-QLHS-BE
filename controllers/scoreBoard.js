@@ -10,6 +10,13 @@ export const getAllScoreBoard = async (req, res) => {
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
       switch (key) {
+        case "studentId":
+          query.dtScoreBoards = {
+            some: {
+              studentId: parseInt(value),
+            },
+          };
+          break;
         case "schoolYearId":
           if (value != "") {
             query.schoolYear = {

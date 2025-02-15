@@ -20,7 +20,6 @@ export const getAllDetailClasses = async (req, res) => {
           };
           break;
         case "studentId":
-          console.log("Xử lý rồi");
           query.studentsClass = {
             some: {
               studentId: parseInt(value),
