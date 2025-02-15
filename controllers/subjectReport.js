@@ -146,9 +146,15 @@ export const createSubjectReport = async (req, res) => {
             },
           });
 
+          const passMark = await prisma.rule.findFirst({
+            where: {
+              name: "Pass Mark",
+            },
+          });
+
           // Tính số học sinh đạt
           const numberPassed = avgScores.reduce((total, avgScoreObj) => {
-            if (avgScoreObj.avgScore >= 5) {
+            if (avgScoreObj.avgScore >= passMark.value) {
               total++;
             }
             return total;
