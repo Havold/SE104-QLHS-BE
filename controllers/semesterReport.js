@@ -137,11 +137,17 @@ export const createSemesterReport = async (req, res) => {
             },
           });
 
+          const passMark = await prisma.rule.findFirst({
+            where: {
+              name: "Pass Mark",
+            },
+          });
+
           // Tính số học sinh đạt
           const numberPassed = avgScores.reduce((total, avgScoreObj) => {
             if (
-              (semesterId == 1 && avgScoreObj.avgSemI >= 5) ||
-              (semesterId == 2 && avgScoreObj.avgSemII >= 5)
+              (semesterId == 1 && avgScoreObj.avgSemI >= passMark.value) ||
+              (semesterId == 2 && avgScoreObj.avgSemII >= passMark.value)
             ) {
               total++;
             }

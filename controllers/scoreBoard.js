@@ -1,5 +1,6 @@
 import prisma from "../client.js";
 import jwt from "jsonwebtoken";
+import { addStudentsToDTScoreBoardFunction } from "./detailScoreBoard.js";
 
 export const getAllScoreBoard = async (req, res) => {
   const { page, pageItems, type, ...queryParams } = req.query;
@@ -105,10 +106,6 @@ export const getScoreBoard = async (req, res) => {
         id: scoreBoardId,
       },
       include: {
-        schoolYear: true,
-        semester: true,
-        subject: true,
-        typeOfExam: true,
         dtScoreBoards: {
           include: {
             student: true,
@@ -116,6 +113,38 @@ export const getScoreBoard = async (req, res) => {
         },
       },
     });
+
+    // const studentIds = scoreBoard.dtScoreBoards.map(
+    //   (dtScoreBoard) => dtScoreBoard.studentId
+    // );
+
+    // const classSchoolYear = await prisma.classSchoolYear.findFirst({
+    //   where: {
+    //     classId: scoreBoard.classId,
+    //     schoolYearId: scoreBoard.schoolYearId,
+    //   },
+    //   include: {
+    //     studentsClass: true,
+    //   },
+    // });
+
+    // const missingStudents = await prisma.studentClass.findMany({
+    //   where: {
+    //     classSchoolYearId: classSchoolYear.id,
+    //     studentId: {
+    //       notIn: studentIds,
+    //     },
+    //   },
+    // });
+
+    // console.log(missingStudents);
+
+    // if (missingStudents.length > 0) {
+    //   const missingStudentIds = missingStudents.map(
+    //     (missingStudent) => missingStudent.studentId
+    //   );
+
+    // }
 
     res.status(200).json(scoreBoard);
   } catch (error) {
