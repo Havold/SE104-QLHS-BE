@@ -430,3 +430,39 @@ export const deleteStudent = (req, res) => {
     return res.status(200).json(`${student.username} has been deleted!`);
   });
 };
+
+// GET NUMBER OF MALE AND FEMALE STUDENTS
+export const countSexStudents = (req, res) => {
+  const token = req.cookies.accessToken;
+
+  if (!token) {
+    return res.status(401).json("YOU ARE NOT LOGGED IN!");
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, async (err, userInfo) => {
+    if (err) {
+      return res.status(403).json("INVALID TOKEN!");
+    }
+
+    try {
+      const students = await prisma.student.findMany();
+
+      let totalMale = 0;
+      let totalFemale = 0;
+
+      for (let student of students) {
+        if (student.sex === "Male") {
+          totalMale++;
+        } else totalFemale++;
+      }
+      return res.status(200).json({ totalMale, totalFemale });
+    } catch (error) {
+      console.error(error);
+      if (error) {
+        res
+          .status(500)
+          .json("An error occurred while classifying sex of students.");
+      }
+    }
+  });
+};

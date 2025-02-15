@@ -1,6 +1,7 @@
 import express from "express";
 import {
   addStudent,
+  countSexStudents,
   deleteStudent,
   getAllStudents,
   getStudent,
@@ -10,6 +11,7 @@ import {
 const router = express.Router();
 
 router.get("/", getAllStudents);
+router.get("/utils/count-sex-of-students", countSexStudents);
 router.get("/:id", getStudent);
 router.post("/", addStudent);
 router.put("/:id", updateStudent);
