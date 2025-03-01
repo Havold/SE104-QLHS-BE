@@ -102,6 +102,8 @@ export const login = async (req, res) => {
 
     res
       .cookie("accessToken", token, {
+        secure: true,
+        sameSite: "None",
         httpOnly: true,
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       })
@@ -131,6 +133,32 @@ export const logout = (req, res) => {
 // CHECK TOKEN
 export const checkToken = (req, res) => {
   const token = req.cookies.accessToken;
-  if (!token) return res.status(200).json(false);
-  return res.status(200).json(true);
+
+  if (!token) return res.status(200).json({ isAuthenticated: false });
+  else {
+    jwt.verify(token, process.env.JWT_SECRET, async (err, userInfo) => {
+      if (err) {
+        res.status(403).json("INVALID TOKEN");
+      }
+
+      const user = await prisma.student.findUnique({
+        where: {
+          id: userInfo.id,
+        },
+        include: {
+          role: {
+            include: {
+              authorities: true,
+            },
+          },
+        },
+      });
+
+      const { password: _, ...others } = user;
+
+      console.log(others);
+
+      return res.status(200).json({ isAuthenticated: true, user: others });
+    });
+  }
 };

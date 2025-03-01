@@ -38,6 +38,7 @@ app.use((req, res, next) => {
 app.use(
   cors({
     origin: "http://localhost:3000",
+    // origin: "http://192.168.80.99:982",
   })
 );
 
